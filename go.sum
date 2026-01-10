@@ -1,0 +1,8 @@
+golang.org/x/mod v0.31.0 h1:HaW9xtz0+kOcWKwli0ZXy79Ix+UW/vOfmWI5QVd2tgI=
+golang.org/x/mod v0.31.0/go.mod h1:43JraMp9cGx1Rx3AqioxrbrhNsLl2l/iNAvuBkrezpg=
+vimagination.zapto.org/cache v1.0.1 h1:crTlJsObyT+063jrqe8MLpuTjjpoZtQKelezFsOpQm8=
+vimagination.zapto.org/cache v1.0.1/go.mod h1:YDVluo/gxsyPJJOMEwK3B/VVcInoKR0lZIqhwOPNnYo=
+vimagination.zapto.org/gotypes v1.0.0 h1:C5jAo7Ilnga7M7o83B+OMc+M3VQVE3fqliti4aa5vPs=
+vimagination.zapto.org/gotypes v1.0.0/go.mod h1:vOHTVXGXxr0ernR0MUDPTccud4WGYz0emteQ14SlAuM=
+vimagination.zapto.org/httpreaderat v1.0.0 h1:VGxvU3Enp154hE/WUA1a4980ggde8iLYH25paFov8qg=
+vimagination.zapto.org/httpreaderat v1.0.0/go.mod h1:bxAeAFjTcXc+hcTZPPhcxWprZ4NBd9pLCoVTgZNMQ7Y=
