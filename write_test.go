@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"go/types"
 	"testing"
 
@@ -37,6 +38,18 @@ func TestGetAllStructs(t *testing.T) {
 	imps := getImports(pkg)
 
 	structs := make(map[string]*types.Struct)
+
+	if err := getAllStructs(imps, structs, "Request"); !errors.Is(err, ErrNoModuleType) {
+		t.Errorf("expected error %v, got %v", ErrNoModuleType, err)
+	}
+
+	if err := getAllStructs(imps, structs, "unknown.Request"); !errors.Is(err, ErrNoModule) {
+		t.Errorf("expected error %v, got %v", ErrNoModule, err)
+	}
+
+	if err := getAllStructs(imps, structs, "vimagination.zapto.org/httpreaderat.Requested"); !errors.Is(err, ErrNoType) {
+		t.Errorf("expected error %v, got %v", ErrNoType, err)
+	}
 
 	if err := getAllStructs(imps, structs, "vimagination.zapto.org/httpreaderat.Request"); err != nil {
 		t.Fatalf("unexpected error: %s", err)
