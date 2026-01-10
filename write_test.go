@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/types"
 	"testing"
 
 	"vimagination.zapto.org/gotypes"
@@ -12,7 +13,7 @@ func TestGetAllImports(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	imps := map[string]string{pkg.Path(): pkg.Name()}
+	imps := map[string]*types.Package{pkg.Path(): pkg}
 
 	getAllImports(pkg.Imports(), imps)
 
@@ -22,7 +23,7 @@ func TestGetAllImports(t *testing.T) {
 		"archive/zip":                         "zip",
 		"bytes":                               "bytes",
 	} {
-		if n := imps[path]; n != name {
+		if n := imps[path].Name(); n != name {
 			t.Errorf("expecting package %q to have name %q, got %q", path, name, n)
 		}
 	}

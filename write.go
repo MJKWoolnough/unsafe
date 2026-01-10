@@ -9,13 +9,13 @@ func WriteType(w io.Writer, pkg *types.Package, types ...string) error {
 	return nil
 }
 
-func getAllImports(imports []*types.Package, imps map[string]string) {
+func getAllImports(imports []*types.Package, imps map[string]*types.Package) {
 	for _, imp := range imports {
 		if _, ok := imps[imp.Path()]; ok {
 			continue
 		}
 
-		imps[imp.Path()] = imp.Name()
+		imps[imp.Path()] = imp
 
 		getAllImports(imp.Imports(), imps)
 	}
