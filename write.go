@@ -1,3 +1,4 @@
+// Package unsafe is a program that localises a type from another package.
 package main
 
 import (
@@ -11,26 +12,6 @@ import (
 
 func WriteType(w io.Writer, pkg *types.Package, types ...string) error {
 	return nil
-}
-
-func getImports(pkg *types.Package) map[string]*types.Package {
-	imps := map[string]*types.Package{pkg.Path(): pkg}
-
-	getAllImports(pkg.Imports(), imps)
-
-	return imps
-}
-
-func getAllImports(imports []*types.Package, imps map[string]*types.Package) {
-	for _, imp := range imports {
-		if _, ok := imps[imp.Path()]; ok {
-			continue
-		}
-
-		imps[imp.Path()] = imp
-
-		getAllImports(imp.Imports(), imps)
-	}
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]*types.Struct, typename string) error {

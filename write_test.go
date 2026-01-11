@@ -8,34 +8,13 @@ import (
 	"vimagination.zapto.org/gotypes"
 )
 
-func TestGetImports(t *testing.T) {
-	pkg, err := gotypes.ParsePackage(".")
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	imps := getImports(pkg)
-
-	for path, name := range map[string]string{
-		"vimagination.zapto.org/unsafe":       "main",
-		"vimagination.zapto.org/httpreaderat": "httpreaderat",
-		"vimagination.zapto.org/cache":        "cache",
-		"archive/zip":                         "zip",
-		"bytes":                               "bytes",
-	} {
-		if n := imps[path].Name(); n != name {
-			t.Errorf("expecting package %q to have name %q, got %q", path, name, n)
-		}
-	}
-}
-
 func TestGetAllStructs(t *testing.T) {
 	pkg, err := gotypes.ParsePackage(".")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	imps := getImports(pkg)
+	imps := gotypes.Imports(pkg)
 
 	structs := make(map[string]*types.Struct)
 
