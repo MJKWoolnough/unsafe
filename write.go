@@ -50,7 +50,7 @@ func getAllStructs(imps map[string]*types.Package, structs map[string]types.Obje
 		return fmt.Errorf("%w: %s", ErrNoModuleType, typename)
 	}
 
-	if strings.Contains(typename[:pos], "/internal/") || strings.HasSuffix(typename[:pos], "/internal") {
+	if strings.Contains(typename[:pos], "/internal/") || strings.HasSuffix(typename[:pos], "/internal") || strings.HasPrefix(typename, "internal/") {
 		return nil
 	}
 

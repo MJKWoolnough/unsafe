@@ -34,6 +34,12 @@ func TestGetAllStructs(t *testing.T) {
 		t.Errorf("expected error %v, got %v", ErrNoType, err)
 	}
 
+	if err := getAllStructs(imps, structs, "internal/sync.Mutex"); err != nil {
+		t.Errorf("unexpected error %v", err)
+	} else if len(structs) > 0 {
+		t.Errorf("expected no types, got %v", structs)
+	}
+
 	if err := getAllStructs(imps, structs, "vimagination.zapto.org/httpreaderat.Request"); err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
