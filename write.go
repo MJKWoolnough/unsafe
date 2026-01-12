@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/token"
 	"go/types"
 	"io"
@@ -86,7 +87,13 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 }
 
 func genAST(w io.Writer, imps map[string]*types.Package, structs map[string]types.Object, packageName string) error {
-	return nil
+	file := &ast.File{
+		Name:  ast.NewIdent(packageName),
+		Decls: []ast.Decl{determineImports(structs)},
+	}
+	fset := token.NewFileSet()
+
+	return format.Node(w, fset, file)
 }
 
 func determineImports(structs map[string]types.Object) *ast.GenDecl {
