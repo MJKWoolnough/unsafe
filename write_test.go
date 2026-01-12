@@ -16,7 +16,7 @@ func TestGetAllStructs(t *testing.T) {
 
 	imps := gotypes.Imports(pkg)
 
-	structs := make(map[string]*types.Struct)
+	structs := make(map[string]types.Object)
 
 	if err := getAllStructs(imps, structs, "Request"); !errors.Is(err, ErrNoModuleType) {
 		t.Errorf("expected error %v, got %v", ErrNoModuleType, err)
@@ -39,7 +39,7 @@ func TestGetAllStructs(t *testing.T) {
 		"vimagination.zapto.org/cache.LRU":            "struct{vimagination.zapto.org/cache.cache[T, U, vimagination.zapto.org/cache.lru[T, U]]}",
 		"sync.Mutex":                                  "struct{_ sync.noCopy; mu internal/sync.Mutex}",
 	} {
-		if s := structs[typeName].String(); s != structStr {
+		if s := structs[typeName].Type().Underlying().String(); s != structStr {
 			t.Errorf("expecting struct %q to have type %q, got %q", typeName, structStr, s)
 		}
 	}
