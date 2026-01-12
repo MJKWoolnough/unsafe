@@ -28,6 +28,10 @@ func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ..
 		}
 	}
 
+	if len(structs) == 0 {
+		return ErrNoTypes
+	}
+
 	return genAST(w, structs, packagename)
 }
 
@@ -135,4 +139,5 @@ var (
 	ErrNoModuleType = errors.New("module-less type")
 	ErrNoModule     = errors.New("module not imported")
 	ErrNoType       = errors.New("no type found")
+	ErrNoTypes      = errors.New("no non-internal types found")
 )
