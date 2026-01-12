@@ -5,8 +5,13 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/token"
 	"go/types"
 	"io"
+	"maps"
+	"slices"
+	"strconv"
 	"strings"
 
 	"vimagination.zapto.org/gotypes"
@@ -82,6 +87,33 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 
 func genAST(w io.Writer, imps map[string]*types.Package, structs map[string]types.Object, packageName string) error {
 	return nil
+}
+
+func determineImports(structs map[string]types.Object) *ast.GenDecl {
+	imports := make(map[string]struct{})
+
+	for _, str := range structs {
+		imports[str.Pkg().Path()] = struct{}{}
+	}
+
+	importPaths := slices.Collect(maps.Keys(imports))
+
+	slices.Sort(importPaths)
+
+	specs := make([]ast.Spec, len(importPaths))
+
+	for n, ip := range importPaths {
+		specs[n] = &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Value: strconv.Quote(ip),
+			},
+		}
+	}
+
+	return &ast.GenDecl{
+		Tok:   token.IMPORT,
+		Specs: specs,
+	}
 }
 
 var (
