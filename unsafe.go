@@ -16,10 +16,11 @@ func main() {
 }
 
 func run() error {
-	var module, output string
+	var module, output, packageName string
 
 	flag.StringVar(&module, "-m", "", "path to module")
 	flag.StringVar(&output, "-o", "", "output file")
+	flag.StringVar(&packageName, "-p", "", "package name")
 
 	flag.Parse()
 
@@ -33,5 +34,5 @@ func run() error {
 		return err
 	}
 
-	return WriteType(f, pkg, flag.Args()...)
+	return WriteType(f, pkg, packageName, flag.Args()...)
 }

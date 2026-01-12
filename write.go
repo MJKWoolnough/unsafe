@@ -8,10 +8,21 @@ import (
 	"go/types"
 	"io"
 	"strings"
+
+	"vimagination.zapto.org/gotypes"
 )
 
-func WriteType(w io.Writer, pkg *types.Package, types ...string) error {
-	return nil
+func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ...string) error {
+	imps := gotypes.Imports(pkg)
+	structs := make(map[string]*types.Struct)
+
+	for _, typename := range typeNames {
+		if err := getAllStructs(imps, structs, typename); err != nil {
+			return err
+		}
+	}
+
+	return genAST(w, imps, structs, packagename)
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]*types.Struct, typename string) error {
@@ -64,8 +75,14 @@ func processField(imps map[string]*types.Package, structs map[string]*types.Stru
 		return processField(imps, structs, t.Elem())
 	case *types.Struct:
 		return getAllStructs(imps, structs, field.String())
+	default:
+		fmt.Printf("%#v\n", t.String())
 	}
 
+	return nil
+}
+
+func genAST(w io.Writer, imps map[string]*types.Package, structs map[string]*types.Struct, packagename string) error {
 	return nil
 }
 
