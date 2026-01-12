@@ -28,7 +28,7 @@ func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ..
 		}
 	}
 
-	return genAST(w, imps, structs, packagename)
+	return genAST(w, structs, packagename)
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]types.Object, typename string) error {
@@ -86,7 +86,7 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 	return nil
 }
 
-func genAST(w io.Writer, imps map[string]*types.Package, structs map[string]types.Object, packageName string) error {
+func genAST(w io.Writer, structs map[string]types.Object, packageName string) error {
 	file := &ast.File{
 		Name:  ast.NewIdent(packageName),
 		Decls: []ast.Decl{determineImports(structs)},
