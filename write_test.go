@@ -2,7 +2,11 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"go/ast"
+	"go/token"
 	"go/types"
+	"reflect"
 	"testing"
 
 	"vimagination.zapto.org/gotypes"
@@ -42,5 +46,35 @@ func TestGetAllStructs(t *testing.T) {
 		if s := structs[typeName].Type().Underlying().String(); s != structStr {
 			t.Errorf("expecting struct %q to have type %q, got %q", typeName, structStr, s)
 		}
+	}
+}
+
+func TestDetermineImports(t *testing.T) {
+	pkg, err := gotypes.ParsePackage(".")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	imps := gotypes.Imports(pkg)
+	structs := make(map[string]types.Object)
+
+	if err := getAllStructs(imps, structs, "strings.Reader"); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	expected := &ast.GenDecl{
+		Tok: token.IMPORT,
+		Specs: []ast.Spec{
+			&ast.ImportSpec{
+				Path: &ast.BasicLit{
+					Value: `"strings"`,
+				},
+			},
+		},
+	}
+
+	if imp := determineImports(structs); !reflect.DeepEqual(imp, expected) {
+		fmt.Println(imp.Specs[0].(*ast.ImportSpec).Path.Value)
+		t.Errorf("expecting imports %v, got %v", expected, imp)
 	}
 }
