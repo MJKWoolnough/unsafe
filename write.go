@@ -46,6 +46,10 @@ func getAllStructs(imps map[string]*types.Package, structs map[string]types.Obje
 		return fmt.Errorf("%w: %s", ErrNoModuleType, typename)
 	}
 
+	if strings.Contains(typename[:pos], "/internal/") || strings.HasSuffix(typename[:pos], "/internal") {
+		return nil
+	}
+
 	pkg, ok := imps[typename[:pos]]
 	if !ok {
 		return fmt.Errorf("%w: %s", ErrNoModule, typename)
@@ -89,7 +93,7 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 func genAST(w io.Writer, structs map[string]types.Object, packageName string) error {
 	file := &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: []ast.Decl{determineImports(structs)},
+		Decls: append([]ast.Decl{determineImports(structs)}, determineStructs(structs)...),
 	}
 	fset := token.NewFileSet()
 
@@ -121,6 +125,10 @@ func determineImports(structs map[string]types.Object) *ast.GenDecl {
 		Tok:   token.IMPORT,
 		Specs: specs,
 	}
+}
+
+func determineStructs(structs map[string]types.Object) []ast.Decl {
+	return nil
 }
 
 var (
