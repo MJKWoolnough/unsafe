@@ -162,6 +162,19 @@ func typeName(name string) string {
 }
 
 func structFieldList(str *types.Struct) []*ast.Field {
+	var fields []*ast.Field
+
+	for field := range str.Fields() {
+		fields = append(fields, &ast.Field{
+			Names: []*ast.Ident{ast.NewIdent(field.Name())},
+			Type:  fieldToType(field.Type()),
+		})
+	}
+
+	return fields
+}
+
+func fieldToType(typ types.Type) ast.Expr {
 	return nil
 }
 
