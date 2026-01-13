@@ -175,6 +175,32 @@ func structFieldList(str *types.Struct) []*ast.Field {
 }
 
 func fieldToType(typ types.Type) ast.Expr {
+	switch t := typ.(type) {
+	case *types.Pointer:
+		return &ast.StarExpr{
+			X: fieldToType(t.Elem()),
+		}
+	case *types.Map:
+		return &ast.MapType{
+			Key:   fieldToType(t.Key()),
+			Value: fieldToType(t.Elem()),
+		}
+	case *types.Array:
+		return &ast.ArrayType{
+			Len: &ast.BasicLit{
+				Value: strconv.FormatInt(t.Len(), 10),
+			},
+			Elt: fieldToType(t.Elem()),
+		}
+	case *types.Slice:
+		return &ast.ArrayType{
+			Elt: fieldToType(t.Elem()),
+		}
+	case *types.Struct:
+	case *types.Basic:
+		return ast.NewIdent(t.Underlying().String())
+	}
+
 	return nil
 }
 
