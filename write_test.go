@@ -139,3 +139,31 @@ func TestFieldToType(t *testing.T) {
 
 	}
 }
+
+func TestWriteType(t *testing.T) {
+	var buf strings.Builder
+
+	pkg, err := gotypes.ParsePackage(".")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	if err := WriteType(&buf, pkg, "e", "strings.Reader"); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	const expectation = `package e
+
+import "strings"
+
+type strings·Reader struct {
+	s        string
+	i        int64
+	prevRune int
+}
+`
+
+	if str := buf.String(); str != expectation {
+		t.Errorf("expecting output %q, got %q", expectation, str)
+	}
+}
