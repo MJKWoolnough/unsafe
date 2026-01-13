@@ -84,3 +84,21 @@ func TestDetermineImports(t *testing.T) {
 		t.Errorf("expecting imports %v, got %v", expected, imp)
 	}
 }
+
+func TestTypeName(t *testing.T) {
+	for n, test := range [...][2]string{
+		{
+			"A", "A",
+		},
+		{
+			"a.A", "a·A",
+		},
+		{
+			"a·A", "a··A",
+		},
+	} {
+		if name := typeName(test[0]); name != test[1] {
+			t.Errorf("test %d: expecting name %q, got %q", n+1, test[1], name)
+		}
+	}
+}
