@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -82,7 +81,6 @@ func TestDetermineImports(t *testing.T) {
 	}
 
 	if imp := determineImports(structs); !reflect.DeepEqual(imp, expected) {
-		fmt.Println(imp.Specs[0].(*ast.ImportSpec).Path.Value)
 		t.Errorf("expecting imports %v, got %v", expected, imp)
 	}
 }
