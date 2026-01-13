@@ -132,6 +132,36 @@ func determineImports(structs map[string]types.Object) *ast.GenDecl {
 }
 
 func determineStructs(structs map[string]types.Object) []ast.Decl {
+	var decls []ast.Decl
+
+	for name, obj := range structs {
+		decls = append(decls, conStruct(name, obj.Type().Underlying().(*types.Struct)))
+	}
+
+	return decls
+}
+
+func conStruct(name string, str *types.Struct) *ast.GenDecl {
+	return &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			&ast.TypeSpec{
+				Name: ast.NewIdent(typeName(name)),
+				Type: &ast.StructType{
+					Fields: &ast.FieldList{
+						List: structFieldList(str),
+					},
+				},
+			},
+		},
+	}
+}
+
+func typeName(name string) string {
+	return name
+}
+
+func structFieldList(str *types.Struct) []*ast.Field {
 	return nil
 }
 
