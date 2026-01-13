@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/token"
 	"go/types"
 	"reflect"
+	"strings"
 	"testing"
 
 	"vimagination.zapto.org/gotypes"
@@ -100,5 +102,42 @@ func TestTypeName(t *testing.T) {
 		if name := typeName(test[0]); name != test[1] {
 			t.Errorf("test %d: expecting name %q, got %q", n+1, test[1], name)
 		}
+	}
+}
+
+func TestFieldToType(t *testing.T) {
+	for n, test := range [...]struct {
+		typ types.Type
+		res string
+	}{
+		{
+			typ: types.Typ[types.Int8],
+			res: "int8",
+		},
+		{
+			typ: types.Typ[types.Bool],
+			res: "bool",
+		},
+		{
+			typ: types.NewPointer(types.Typ[types.Float32]),
+			res: "*float32",
+		},
+		{
+			typ: types.NewMap(types.Typ[types.String], types.NewSlice(types.Typ[types.Uint32])),
+			res: "map[string][]uint32",
+		},
+		{
+			typ: types.NewArray(types.Typ[types.Complex128], 3),
+			res: "[3]complex128",
+		},
+	} {
+		var buf strings.Builder
+
+		format.Node(&buf, token.NewFileSet(), fieldToType(test.typ))
+
+		if str := buf.String(); str != test.res {
+			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
+		}
+
 	}
 }
