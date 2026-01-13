@@ -198,47 +198,7 @@ func fieldToType(typ types.Type) ast.Expr {
 		}
 	case *types.Struct:
 	case *types.Basic:
-		var typ string
-
-		switch t.Kind() {
-		case types.Bool:
-			typ = "bool"
-		case types.Int:
-			typ = "int"
-		case types.Int8:
-			typ = "int8"
-		case types.Int16:
-			typ = "int16"
-		case types.Int32:
-			typ = "int32"
-		case types.Int64:
-			typ = "int64"
-		case types.Uint:
-			typ = "uint"
-		case types.Uint8:
-			typ = "uint8"
-		case types.Uint16:
-			typ = "uint16"
-		case types.Uint32:
-			typ = "uint32"
-		case types.Uint64:
-			typ = "uint64"
-		case types.Uintptr:
-			typ = "uintptr"
-		case types.Float32:
-			typ = "float32"
-		case types.Float64:
-			typ = "float64"
-		case types.Complex64:
-			typ = "complex64"
-		case types.Complex128:
-			typ = "complex128"
-		case types.String:
-			typ = "string"
-		case types.UnsafePointer:
-			typ = "unsafe.Pointer"
-		}
-		return ast.NewIdent(typ)
+		return ast.NewIdent(t.Name())
 	}
 
 	return nil
