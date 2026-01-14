@@ -32,7 +32,7 @@ func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ..
 		return ErrNoTypes
 	}
 
-	return genAST(w, structs, packagename)
+	return genAST(w, structs, packagename, typeNames)
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]types.Object, typename string) error {
@@ -94,10 +94,10 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 	return nil
 }
 
-func genAST(w io.Writer, structs map[string]types.Object, packageName string) error {
+func genAST(w io.Writer, structs map[string]types.Object, packageName string, types []string) error {
 	file := &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append([]ast.Decl{determineImports(structs)}, determineStructs(structs)...),
+		Decls: append(append([]ast.Decl{determineImports(structs)}, determineStructs(structs)...), determineMethods(types)...),
 	}
 	fset := token.NewFileSet()
 
@@ -201,6 +201,20 @@ func fieldToType(typ types.Type) ast.Expr {
 		return ast.NewIdent(t.Name())
 	}
 
+	return nil
+}
+
+func determineMethods(types []string) []ast.Decl {
+	var decls []ast.Decl
+
+	for _, typ := range types {
+		decls = append(decls, buildMethod(typ))
+	}
+
+	return decls
+}
+
+func buildMethod(typ string) *ast.GenDecl {
 	return nil
 }
 
