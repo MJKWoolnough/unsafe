@@ -208,14 +208,63 @@ func determineMethods(types []string) []ast.Decl {
 	var decls []ast.Decl
 
 	for _, typ := range types {
-		decls = append(decls, buildMethod(typ))
+		decls = append(decls, buildFunc(typ))
 	}
 
 	return decls
 }
 
-func buildMethod(typ string) *ast.GenDecl {
-	return nil
+func buildFunc(typ string) *ast.FuncDecl {
+	return &ast.FuncDecl{
+		Name: ast.NewIdent("make" + typeName(typ)),
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{ast.NewIdent("x")},
+						Type: &ast.StarExpr{
+							X: ast.NewIdent(typ),
+						},
+					},
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: &ast.StarExpr{
+							X: ast.NewIdent(typeName(typ)),
+						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.CallExpr{
+							Fun: &ast.ParenExpr{
+								X: &ast.StarExpr{
+									X: ast.NewIdent(typeName(typ)),
+								},
+							},
+							Args: []ast.Expr{
+								&ast.CallExpr{
+									Fun: &ast.SelectorExpr{
+										X:   ast.NewIdent("unsafe"),
+										Sel: ast.NewIdent("Pointer"),
+									},
+									Args: []ast.Expr{
+										ast.NewIdent("x"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 var (
