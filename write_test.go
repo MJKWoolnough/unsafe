@@ -77,6 +77,11 @@ func TestDetermineImports(t *testing.T) {
 					Value: `"strings"`,
 				},
 			},
+			&ast.ImportSpec{
+				Path: &ast.BasicLit{
+					Value: `"unsafe"`,
+				},
+			},
 		},
 	}
 
@@ -154,7 +159,10 @@ func TestWriteType(t *testing.T) {
 
 	const expectation = `package e
 
-import "strings"
+import (
+	"strings"
+	"unsafe"
+)
 
 type strings_Reader struct {
 	s        string

@@ -105,7 +105,7 @@ func genAST(w io.Writer, structs map[string]types.Object, packageName string, ty
 }
 
 func determineImports(structs map[string]types.Object) *ast.GenDecl {
-	imports := make(map[string]struct{})
+	imports := map[string]struct{}{"unsafe": {}}
 
 	for _, str := range structs {
 		imports[str.Pkg().Path()] = struct{}{}
