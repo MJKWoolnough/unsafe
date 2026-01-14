@@ -156,10 +156,14 @@ func TestWriteType(t *testing.T) {
 
 import "strings"
 
-type strings·Reader struct {
+type strings_Reader struct {
 	s        string
 	i        int64
 	prevRune int
+}
+
+func makestrings_Reader(x *strings.Reader) *strings_Reader {
+	return (*strings_Reader)(unsafe.Pointer(x))
 }
 `
 
