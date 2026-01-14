@@ -91,10 +91,10 @@ func TestTypeName(t *testing.T) {
 			"A", "A",
 		},
 		{
-			"a.A", "a·A",
+			"a.A", "a_A",
 		},
 		{
-			"a·A", "a··A",
+			"a_A", "a__A",
 		},
 	} {
 		if name := typeName(test[0]); name != test[1] {
