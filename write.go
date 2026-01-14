@@ -158,7 +158,7 @@ func conStruct(name string, str *types.Struct) *ast.GenDecl {
 }
 
 func typeName(name string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(name, "_", "__"), ".", "_")
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(name, "_", "__"), ".", "_"), "/", "_")
 }
 
 func structFieldList(str *types.Struct) []*ast.Field {
