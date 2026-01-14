@@ -145,6 +145,22 @@ func TestFieldToType(t *testing.T) {
 	}
 }
 
+func TestBuildFunc(t *testing.T) {
+	for n, test := range [...]struct {
+		typ, res string
+	}{
+		{"strings.Reader", "func makestrings_Reader(x *strings.Reader) *strings_Reader {\n\treturn (*strings_Reader)(unsafe.Pointer(x))\n}"},
+	} {
+		var buf strings.Builder
+
+		format.Node(&buf, token.NewFileSet(), buildFunc(test.typ))
+
+		if str := buf.String(); str != test.res {
+			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
+		}
+	}
+}
+
 func TestWriteType(t *testing.T) {
 	var buf strings.Builder
 
