@@ -144,7 +144,6 @@ func TestFieldToType(t *testing.T) {
 		if str := buf.String(); str != test.res {
 			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
 		}
-
 	}
 }
 
