@@ -101,6 +101,9 @@ func TestTypeName(t *testing.T) {
 		{
 			"a_A", "a__A",
 		},
+		{
+			"vimagination.zapto.org/httpreaderat.Request", "vimagination_zapto_org_httpreaderat_Request",
+		},
 	} {
 		if name := typeName(test[0]); name != test[1] {
 			t.Errorf("test %d: expecting name %q, got %q", n+1, test[1], name)
