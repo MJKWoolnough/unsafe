@@ -176,6 +176,6 @@ func makestrings_Reader(x *strings.Reader) *strings_Reader {
 `
 
 	if str := buf.String(); str != expectation {
-		t.Errorf("expecting output %q, got %q", expectation, str)
+		t.Errorf("expecting output:\n%s\n\ngot:\n %s", expectation, str)
 	}
 }
