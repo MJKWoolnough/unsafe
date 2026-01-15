@@ -246,43 +246,33 @@ func isStructRecursive(str *types.Struct, found map[*types.Struct]bool) bool {
 
 func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
 	return func(yield func(*types.Struct) bool) {
+		var elem types.Type
+
 		switch t := typ.Underlying().(type) {
 		case *types.Struct:
-			if !yield(t) {
-				return
-			}
+			yield(t)
+
+			return
 		case *types.Pointer:
-			if !iterate(yield, getStructsFromType(t.Elem())) {
-				return
-			}
+			elem = t.Elem()
 		case *types.Map:
-			if !iterate(yield, getStructsFromType(t.Key())) {
-				return
+			for str := range getStructsFromType(t.Key()) {
+				if !yield(str) {
+					return
+				}
 			}
 
-			if !iterate(yield, getStructsFromType(t.Elem())) {
-				return
-			}
+			elem = t.Elem()
 		case *types.Array:
-			if !iterate(yield, getStructsFromType(t.Elem())) {
-				return
-			}
+			elem = t.Elem()
 		case *types.Slice:
-			if !iterate(yield, getStructsFromType(t.Elem())) {
-				return
-			}
+			elem = t.Elem()
+		default:
+			return
 		}
-	}
-}
 
-func iterate[T any](yield func(T) bool, seq iter.Seq[T]) bool {
-	for v := range seq {
-		if !yield(v) {
-			return false
-		}
+		getStructsFromType(elem)(yield)
 	}
-
-	return true
 }
 
 func determineMethods(types []string) []ast.Decl {
