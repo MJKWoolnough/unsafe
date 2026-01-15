@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"iter"
 	"maps"
 	"slices"
 	"strconv"
@@ -206,6 +207,29 @@ func fieldToType(typ types.Type) ast.Expr {
 	}
 
 	return nil
+}
+
+func isStructRecursive(str *types.Struct, found map[*types.Struct]bool) bool {
+	for field := range str.Fields() {
+		for str := range getStructsFromType(field.Type().Underlying()) {
+			if recursive, done := found[str]; recursive {
+				return true
+			} else if !done {
+				found[str] = false
+
+				if isStructRecursive(str, found) {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
+	return func(yield func(*types.Struct) bool) {
+	}
 }
 
 func determineMethods(types []string) []ast.Decl {
