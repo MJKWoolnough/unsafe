@@ -180,7 +180,15 @@ func structFieldList(str *types.Struct) []*ast.Field {
 }
 
 func fieldToType(typ types.Type) ast.Expr {
-	switch t := typ.(type) {
+	named, isNamed := typ.(*types.Named)
+	if isNamed && named.Obj().Exported() {
+		return &ast.SelectorExpr{
+			X:   ast.NewIdent(named.Obj().Pkg().Name()),
+			Sel: ast.NewIdent(named.Obj().Name()),
+		}
+	}
+
+	switch t := typ.Underlying().(type) {
 	case *types.Pointer:
 		return &ast.StarExpr{
 			X: fieldToType(t.Elem()),
@@ -202,6 +210,15 @@ func fieldToType(typ types.Type) ast.Expr {
 			Elt: fieldToType(t.Elem()),
 		}
 	case *types.Struct:
+		if isStructRecursive(t, map[*types.Struct]bool{t: true}) {
+			return ast.NewIdent(typeName(named.Obj().Pkg().Path() + "." + named.Obj().Name()))
+		}
+
+		return &ast.StructType{
+			Fields: &ast.FieldList{
+				List: structFieldList(t),
+			},
+		}
 	case *types.Basic:
 		return ast.NewIdent(t.Name())
 	}
