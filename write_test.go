@@ -4,9 +4,11 @@ import (
 	"errors"
 	"go/ast"
 	"go/format"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -142,6 +144,64 @@ func TestFieldToType(t *testing.T) {
 
 		if str := buf.String(); str != test.res {
 			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
+		}
+	}
+}
+
+func TestIsStructRecursive(t *testing.T) {
+	for n, test := range [...]struct {
+		input       string
+		isRecursive bool
+	}{
+		{
+			"package a\n\ntype a struct { B b }\n\ntype b struct {c *b}",
+			false,
+		},
+		{
+			"package a\n\ntype a struct {B *a}",
+			true,
+		},
+		{
+			"package a\n\ntype a struct {B map[string]int}",
+			false,
+		},
+		{
+			"package a\n\ntype a struct {B map[*a]int}",
+			true,
+		},
+		{
+			"package a\n\ntype a struct {B map[string]a}",
+			true,
+		},
+		{
+			"package a\n\ntype a struct {B []a}",
+			true,
+		},
+		{
+			"package a\n\ntype a struct {B [2]*a}",
+			true,
+		},
+	} {
+		fset := token.NewFileSet()
+
+		f, err := parser.ParseFile(fset, "a.go", test.input, parser.AllErrors|parser.ParseComments)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		conf := types.Config{
+			GoVersion: runtime.Version(),
+		}
+
+		pkg, err := conf.Check("", fset, []*ast.File{f}, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		self := pkg.Scope().Lookup("a").Type().Underlying().(*types.Struct)
+
+		if isStructRecursive(self, map[*types.Struct]bool{self: true}) != test.isRecursive {
+			t.Errorf("test %d: didn't get expected recursive value: %v", n+1, test.isRecursive)
 		}
 	}
 }
