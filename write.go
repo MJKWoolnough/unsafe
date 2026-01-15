@@ -68,6 +68,10 @@ func getAllStructs(imps map[string]*types.Package, structs map[string]types.Obje
 		structs[typename[:genPos]] = obj
 
 		for field := range s.Fields() {
+			if named, ok := field.Type().(*types.Named); ok && named.Obj().Exported() {
+				continue
+			}
+
 			if err := processField(imps, structs, field.Type()); err != nil {
 				return err
 			}
