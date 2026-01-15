@@ -211,7 +211,7 @@ func fieldToType(typ types.Type) ast.Expr {
 
 func isStructRecursive(str *types.Struct, found map[*types.Struct]bool) bool {
 	for field := range str.Fields() {
-		for str := range getStructsFromType(field.Type().Underlying()) {
+		for str := range getStructsFromType(field.Type()) {
 			if recursive, done := found[str]; recursive {
 				return true
 			} else if !done {
@@ -229,7 +229,43 @@ func isStructRecursive(str *types.Struct, found map[*types.Struct]bool) bool {
 
 func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
 	return func(yield func(*types.Struct) bool) {
+		switch t := typ.Underlying().(type) {
+		case *types.Struct:
+			if !yield(t) {
+				return
+			}
+		case *types.Pointer:
+			if !iterate(yield, getStructsFromType(t.Elem())) {
+				return
+			}
+		case *types.Map:
+			if !iterate(yield, getStructsFromType(t.Key())) {
+				return
+			}
+
+			if !iterate(yield, getStructsFromType(t.Elem())) {
+				return
+			}
+		case *types.Array:
+			if !iterate(yield, getStructsFromType(t.Elem())) {
+				return
+			}
+		case *types.Slice:
+			if !iterate(yield, getStructsFromType(t.Elem())) {
+				return
+			}
+		}
 	}
+}
+
+func iterate[T any](yield func(T) bool, seq iter.Seq[T]) bool {
+	for v := range seq {
+		if !yield(v) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func determineMethods(types []string) []ast.Decl {
