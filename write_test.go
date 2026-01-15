@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go/ast"
 	"go/format"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -200,6 +201,7 @@ func parseType(t *testing.T, input string) *types.Struct {
 
 	conf := types.Config{
 		GoVersion: runtime.Version(),
+		Importer:  importer.ForCompiler(fset, runtime.Compiler, nil),
 	}
 
 	pkg, err := conf.Check("", fset, []*ast.File{f}, nil)
@@ -222,6 +224,26 @@ func TestBuildFunc(t *testing.T) {
 
 		if str := buf.String(); str != test.res {
 			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
+		}
+	}
+}
+
+func TestConStruct(t *testing.T) {
+	for n, test := range [...]struct {
+		input, output string
+	}{
+		{"package a\n\nimport \"strings\"\n\ntype a struct { r strings.Reader }", "type a struct {\n\tr strings.Reader\n}"},
+		{"package a\n\ntype a struct { a *a }", "type a struct {\n\ta *_a\n}"},
+		{"package a\n\ntype a struct { a b }\ntype b struct { c int }", "type a struct {\n\ta struct {\n\t\tc int\n\t}\n}"},
+	} {
+		var buf strings.Builder
+
+		self := parseType(t, test.input)
+
+		format.Node(&buf, token.NewFileSet(), conStruct("a", self))
+
+		if str := buf.String(); str != test.output {
+			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
 		}
 	}
 }
