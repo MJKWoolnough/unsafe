@@ -182,28 +182,32 @@ func TestIsStructRecursive(t *testing.T) {
 			true,
 		},
 	} {
-		fset := token.NewFileSet()
-
-		f, err := parser.ParseFile(fset, "a.go", test.input, parser.AllErrors|parser.ParseComments)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		conf := types.Config{
-			GoVersion: runtime.Version(),
-		}
-
-		pkg, err := conf.Check("", fset, []*ast.File{f}, nil)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		self := pkg.Scope().Lookup("a").Type().Underlying().(*types.Struct)
-
-		if isStructRecursive(self, map[*types.Struct]bool{self: true}) != test.isRecursive {
+		if self := parseType(t, test.input); isStructRecursive(self, map[*types.Struct]bool{self: true}) != test.isRecursive {
 			t.Errorf("test %d: didn't get expected recursive value: %v", n+1, test.isRecursive)
 		}
 	}
+}
+
+func parseType(t *testing.T, input string) *types.Struct {
+	t.Helper()
+
+	fset := token.NewFileSet()
+
+	f, err := parser.ParseFile(fset, "a.go", input, parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	conf := types.Config{
+		GoVersion: runtime.Version(),
+	}
+
+	pkg, err := conf.Check("", fset, []*ast.File{f}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	return pkg.Scope().Lookup("a").Type().Underlying().(*types.Struct)
 }
 
 func TestBuildFunc(t *testing.T) {
