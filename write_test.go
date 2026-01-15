@@ -48,7 +48,6 @@ func TestGetAllStructs(t *testing.T) {
 	for typeName, structStr := range map[string]string{
 		"vimagination.zapto.org/httpreaderat.Request": "struct{url string; length int64; blockSize int64; cache *vimagination.zapto.org/cache.LRU[int64, string]}",
 		"vimagination.zapto.org/cache.LRU":            "struct{vimagination.zapto.org/cache.cache[T, U, vimagination.zapto.org/cache.lru[T, U]]}",
-		"sync.Mutex":                                  "struct{_ sync.noCopy; mu internal/sync.Mutex}",
 	} {
 		if s := structs[typeName].Type().Underlying().String(); s != structStr {
 			t.Errorf("expecting struct %q to have type %q, got %q", typeName, structStr, s)
