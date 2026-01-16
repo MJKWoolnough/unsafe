@@ -204,7 +204,7 @@ func parseType(t *testing.T, input string) *types.Struct {
 		Importer:  importer.ForCompiler(fset, runtime.Compiler, nil),
 	}
 
-	pkg, err := conf.Check("", fset, []*ast.File{f}, nil)
+	pkg, err := conf.Check("a", fset, []*ast.File{f}, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -233,7 +233,7 @@ func TestConStruct(t *testing.T) {
 		input, output string
 	}{
 		{"package a\n\nimport \"strings\"\n\ntype a struct { r strings.Reader }", "type a struct {\n\tr strings.Reader\n}"},
-		{"package a\n\ntype a struct { a *a }", "type a struct {\n\ta *_a\n}"},
+		{"package a\n\ntype a struct { a *a }", "type a struct {\n\ta *a_a\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b struct { c int }", "type a struct {\n\ta struct {\n\t\tc int\n\t}\n}"},
 	} {
 		var buf strings.Builder
