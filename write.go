@@ -20,20 +20,20 @@ import (
 )
 
 func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ...string) error {
-	imps := gotypes.Imports(pkg)
-	structs := make(map[string]types.Object)
-
-	for _, typename := range typeNames {
-		if err := getAllStructs(imps, structs, typename); err != nil {
-			return err
-		}
+	b := builder{
+		imports: make(map[string]ast.Decl),
+		structs: make(map[string]ast.Decl),
+		pkg:     pkg,
 	}
 
-	if len(structs) == 0 {
-		return ErrNoTypes
+	file, err := b.genAST(packagename, typeNames)
+	if err != nil {
+		return err
 	}
 
-	return genAST(w, structs, packagename, typeNames)
+	fset := token.NewFileSet()
+
+	return format.Node(w, fset, file)
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]types.Object, typename string) error {
@@ -97,14 +97,65 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 	return nil
 }
 
-func genAST(w io.Writer, structs map[string]types.Object, packageName string, types []string) error {
-	file := &ast.File{
-		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{determineImports(structs)}, determineStructs(structs)...), determineMethods(types)...),
-	}
-	fset := token.NewFileSet()
+type builder struct {
+	imports map[string]ast.Decl
+	structs map[string]ast.Decl
+	pkg     *types.Package
+}
 
-	return format.Node(w, fset, file)
+func (b *builder) genAST(packageName string, types []string) (*ast.File, error) {
+	imps := gotypes.Imports(b.pkg)
+
+	for _, typeName := range types {
+		str, err := b.getStruct(imps, typeName)
+		if err != nil {
+			return nil, err
+		}
+
+		b.conStruct(typeName, str)
+	}
+
+	return &ast.File{
+		Name:  ast.NewIdent(packageName),
+		Decls: append(append(slices.Collect(maps.Values(b.imports)), b.determineStructs(nil)...), determineMethods(types)...),
+	}, nil
+}
+
+func (b *builder) getStruct(imps map[string]*types.Package, typename string) (*types.Struct, error) {
+	genPos := strings.IndexByte(typename, '[')
+	if genPos == -1 {
+		genPos = len(typename)
+	}
+
+	if _, ok := b.structs[typename[:genPos]]; ok {
+		return nil, nil
+	}
+
+	pos := strings.LastIndexByte(typename[:genPos], '.')
+	if pos < 0 {
+		return nil, fmt.Errorf("%w: %s", ErrNoModuleType, typename)
+	}
+
+	if strings.Contains(typename[:pos], "/internal/") || strings.HasSuffix(typename[:pos], "/internal") || strings.HasPrefix(typename, "internal/") {
+		return nil, ErrInternal
+	}
+
+	pkg, ok := imps[typename[:pos]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrNoModule, typename)
+	}
+
+	obj := pkg.Scope().Lookup(typename[pos+1 : genPos])
+	if obj == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNoType, typename)
+	}
+
+	s, ok := obj.Type().Underlying().(*types.Struct)
+	if !ok {
+		return nil, ErrNotStruct
+	}
+
+	return s, nil
 }
 
 func determineImports(structs map[string]types.Object) *ast.GenDecl {
@@ -134,17 +185,17 @@ func determineImports(structs map[string]types.Object) *ast.GenDecl {
 	}
 }
 
-func determineStructs(structs map[string]types.Object) []ast.Decl {
+func (b *builder) determineStructs(structs map[string]types.Object) []ast.Decl {
 	var decls []ast.Decl
 
 	for name, obj := range structs {
-		decls = append(decls, conStruct(name, obj.Type().Underlying().(*types.Struct)))
+		decls = append(decls, b.conStruct(name, obj.Type().Underlying().(*types.Struct)))
 	}
 
 	return decls
 }
 
-func conStruct(name string, str *types.Struct) *ast.GenDecl {
+func (b *builder) conStruct(name string, str *types.Struct) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok: token.TYPE,
 		Specs: []ast.Spec{
@@ -341,4 +392,6 @@ var (
 	ErrNoModule     = errors.New("module not imported")
 	ErrNoType       = errors.New("no type found")
 	ErrNoTypes      = errors.New("no non-internal types found")
+	ErrNotStruct    = errors.New("not a struct type")
+	ErrInternal     = errors.New("cannot process internal type")
 )
