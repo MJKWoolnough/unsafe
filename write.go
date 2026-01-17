@@ -20,20 +20,14 @@ import (
 )
 
 func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ...string) error {
-	b := builder{
-		imports: make(map[string]ast.Decl),
-		structs: make(map[string]ast.Decl),
-		pkg:     pkg,
-	}
+	b := newBuilder(pkg)
 
 	file, err := b.genAST(packagename, typeNames)
 	if err != nil {
 		return err
 	}
 
-	fset := token.NewFileSet()
-
-	return format.Node(w, fset, file)
+	return format.Node(w, b.fset, file)
 }
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]types.Object, typename string) error {
@@ -101,6 +95,16 @@ type builder struct {
 	imports map[string]ast.Decl
 	structs map[string]ast.Decl
 	pkg     *types.Package
+	fset    *token.FileSet
+}
+
+func newBuilder(pkg *types.Package) *builder {
+	return &builder{
+		imports: make(map[string]ast.Decl),
+		structs: make(map[string]ast.Decl),
+		pkg:     pkg,
+		fset:    token.NewFileSet(),
+	}
 }
 
 func (b *builder) genAST(packageName string, types []string) (*ast.File, error) {
