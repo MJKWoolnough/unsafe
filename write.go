@@ -11,6 +11,8 @@ import (
 	"go/types"
 	"io"
 	"iter"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -129,7 +131,7 @@ func (b *builder) genAST(packageName string, types []string) (*ast.File, error) 
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append(b.genImports(), b.determineStructs(nil)...), determineMethods(types)...),
+		Decls: append(append([]ast.Decl{b.genImports()}, b.determineStructs(nil)...), determineMethods(types)...),
 	}, nil
 }
 
@@ -172,8 +174,75 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (*t
 	return s, nil
 }
 
-func (b *builder) genImports() []ast.Decl {
-	return nil
+func (b *builder) genImports() *ast.GenDecl {
+	names := map[string]struct{}{}
+
+	specs := b.processImports(names, false)
+	specs = append(specs, b.processImports(names, true)...)
+
+	return &ast.GenDecl{
+		Tok:   token.IMPORT,
+		Specs: specs,
+	}
+}
+
+func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
+	imps := map[string]*ast.ImportSpec{}
+
+	for _, imp := range b.imports {
+		if _, isExt := b.mod.Imports[imp.Path()]; isExt == ext {
+			oname := imp.Name()
+			name := oname
+			pos := 0
+
+			for has(names, oname) {
+				pos++
+				name = oname + strconv.Itoa(pos)
+			}
+
+			var aName *ast.Ident
+
+			if pos > 0 {
+				aName = ast.NewIdent(name)
+			}
+
+			imps[imp.Path()] = &ast.ImportSpec{
+				Name: aName,
+				Path: &ast.BasicLit{
+					Kind:  token.STRING,
+					Value: strconv.Quote(imp.Path()),
+				},
+			}
+		}
+	}
+
+	if !ext && !has(imps, "unsafe") {
+		imps["unsafe"] = &ast.ImportSpec{
+			Name: ast.NewIdent("unsafe"),
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: `"unsafe"`,
+			},
+		}
+	}
+
+	keys := slices.Collect(maps.Keys(imps))
+
+	slices.Sort(keys)
+
+	var specs []ast.Spec
+
+	for _, key := range keys {
+		specs = append(specs, imps[key])
+	}
+
+	return specs
+}
+
+func has[K comparable, V any](m map[K]V, k K) bool {
+	_, has := m[k]
+
+	return has
 }
 
 func (b *builder) determineStructs(structs map[string]types.Object) []ast.Decl {
