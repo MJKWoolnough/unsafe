@@ -126,12 +126,12 @@ func (b *builder) genAST(packageName string, types []string) (*ast.File, error) 
 			return nil, err
 		}
 
-		b.conStruct(typeName, str)
+		b.structs[typeName] = b.conStruct(typeName, str)
 	}
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, b.determineStructs(nil)...), determineMethods(types)...),
+		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), determineMethods(types)...),
 	}, nil
 }
 
@@ -218,7 +218,6 @@ func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec
 
 	if !ext && !has(imps, "unsafe") {
 		imps["unsafe"] = &ast.ImportSpec{
-			Name: ast.NewIdent("unsafe"),
 			Path: &ast.BasicLit{
 				Kind:  token.STRING,
 				Value: `"unsafe"`,

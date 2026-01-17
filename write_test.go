@@ -59,35 +59,34 @@ func TestGetAllStructs(t *testing.T) {
 }
 
 func TestDetermineImports(t *testing.T) {
-	pkg, err := gotypes.ParsePackage(".")
+	b, err := newBuilder(".")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	imps := gotypes.Imports(pkg)
-	structs := make(map[string]types.Object)
+	imps := gotypes.Imports(b.pkg)
 
-	if err := getAllStructs(imps, structs, "strings.Reader"); err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
+	b.imports["strings"] = imps["strings"]
 
 	expected := &ast.GenDecl{
 		Tok: token.IMPORT,
 		Specs: []ast.Spec{
 			&ast.ImportSpec{
 				Path: &ast.BasicLit{
+					Kind:  token.STRING,
 					Value: `"strings"`,
 				},
 			},
 			&ast.ImportSpec{
 				Path: &ast.BasicLit{
+					Kind:  token.STRING,
 					Value: `"unsafe"`,
 				},
 			},
 		},
 	}
 
-	if imp := determineImports(structs); !reflect.DeepEqual(imp, expected) {
+	if imp := b.genImports(); !reflect.DeepEqual(imp, expected) {
 		t.Errorf("expecting imports %v, got %v", expected, imp)
 	}
 }
@@ -244,7 +243,9 @@ func TestConStruct(t *testing.T) {
 
 		self := parseType(t, test.input)
 
-		format.Node(&buf, token.NewFileSet(), conStruct("a", self))
+		var b builder
+
+		format.Node(&buf, token.NewFileSet(), b.conStruct("a", self))
 
 		if str := buf.String(); str != test.output {
 			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
@@ -255,12 +256,12 @@ func TestConStruct(t *testing.T) {
 func TestWriteType(t *testing.T) {
 	var buf strings.Builder
 
-	pkg, err := gotypes.ParsePackage(".")
+	b, err := newBuilder(".")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	if err := WriteType(&buf, pkg, "e", "strings.Reader"); err != nil {
+	if err := b.WriteType(&buf, "e", "strings.Reader"); err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
@@ -283,6 +284,6 @@ func makestrings_Reader(x *strings.Reader) *strings_Reader {
 `
 
 	if str := buf.String(); str != expectation {
-		t.Errorf("expecting output:\n%s\n\ngot:\n %s", expectation, str)
+		t.Errorf("expecting output:\n%s\n\ngot:\n%s", expectation, str)
 	}
 }
