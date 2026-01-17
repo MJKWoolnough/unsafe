@@ -189,7 +189,7 @@ func TestIsStructRecursive(t *testing.T) {
 	}
 }
 
-func parseType(t *testing.T, input string) *types.Struct {
+func parseFile(t *testing.T, input string) *types.Package {
 	t.Helper()
 
 	fset := token.NewFileSet()
@@ -209,7 +209,11 @@ func parseType(t *testing.T, input string) *types.Struct {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	return pkg.Scope().Lookup("a").Type().Underlying().(*types.Struct)
+	return pkg
+}
+
+func parseType(t *testing.T, input string) *types.Struct {
+	return parseFile(t, input).Scope().Lookup("a").Type().Underlying().(*types.Struct)
 }
 
 func TestBuildFunc(t *testing.T) {
