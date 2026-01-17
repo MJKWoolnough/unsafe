@@ -11,24 +11,11 @@ import (
 	"go/types"
 	"io"
 	"iter"
-	"maps"
-	"slices"
 	"strconv"
 	"strings"
 
 	"vimagination.zapto.org/gotypes"
 )
-
-func WriteType(w io.Writer, pkg *types.Package, packagename string, typeNames ...string) error {
-	b := newBuilder(pkg)
-
-	file, err := b.genAST(packagename, typeNames)
-	if err != nil {
-		return err
-	}
-
-	return format.Node(w, b.fset, file)
-}
 
 func getAllStructs(imps map[string]*types.Package, structs map[string]types.Object, typename string) error {
 	genPos := strings.IndexByte(typename, '[')
@@ -92,19 +79,40 @@ func processField(imps map[string]*types.Package, structs map[string]types.Objec
 }
 
 type builder struct {
-	imports map[string]ast.Decl
+	mod     *gotypes.ModFile
+	imports map[string]*types.Package
 	structs map[string]ast.Decl
 	pkg     *types.Package
 	fset    *token.FileSet
 }
 
-func newBuilder(pkg *types.Package) *builder {
+func newBuilder(module string) (*builder, error) {
+	pkg, err := gotypes.ParsePackage(module)
+	if err != nil {
+		return nil, err
+	}
+
+	mod, err := gotypes.ParseModFile(module)
+	if err != nil {
+		return nil, err
+	}
+
 	return &builder{
-		imports: make(map[string]ast.Decl),
+		mod:     mod,
+		imports: make(map[string]*types.Package),
 		structs: make(map[string]ast.Decl),
 		pkg:     pkg,
 		fset:    token.NewFileSet(),
+	}, nil
+}
+
+func (b *builder) WriteType(w io.Writer, packagename string, typeNames ...string) error {
+	file, err := b.genAST(packagename, typeNames)
+	if err != nil {
+		return err
 	}
+
+	return format.Node(w, b.fset, file)
 }
 
 func (b *builder) genAST(packageName string, types []string) (*ast.File, error) {
@@ -121,7 +129,7 @@ func (b *builder) genAST(packageName string, types []string) (*ast.File, error) 
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append(slices.Collect(maps.Values(b.imports)), b.determineStructs(nil)...), determineMethods(types)...),
+		Decls: append(append(b.genImports(), b.determineStructs(nil)...), determineMethods(types)...),
 	}, nil
 }
 
@@ -159,34 +167,13 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (*t
 		return nil, ErrNotStruct
 	}
 
+	b.imports[typename[:pos]] = pkg
+
 	return s, nil
 }
 
-func determineImports(structs map[string]types.Object) *ast.GenDecl {
-	imports := map[string]struct{}{"unsafe": {}}
-
-	for _, str := range structs {
-		imports[str.Pkg().Path()] = struct{}{}
-	}
-
-	importPaths := slices.Collect(maps.Keys(imports))
-
-	slices.Sort(importPaths)
-
-	specs := make([]ast.Spec, len(importPaths))
-
-	for n, ip := range importPaths {
-		specs[n] = &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Value: strconv.Quote(ip),
-			},
-		}
-	}
-
-	return &ast.GenDecl{
-		Tok:   token.IMPORT,
-		Specs: specs,
-	}
+func (b *builder) genImports() []ast.Decl {
+	return nil
 }
 
 func (b *builder) determineStructs(structs map[string]types.Object) []ast.Decl {

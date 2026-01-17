@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"vimagination.zapto.org/gotypes"
 )
 
 func main() {
@@ -24,15 +22,12 @@ func run() error {
 
 	flag.Parse()
 
-	pkg, err := gotypes.ParsePackage(module)
-	if err != nil {
-		return err
-	}
+	b, err := newBuilder(module)
 
 	f, err := os.Create(output)
 	if err != nil {
 		return err
 	}
 
-	return WriteType(f, pkg, packageName, flag.Args()...)
+	return b.WriteType(f, packageName, flag.Args()...)
 }
