@@ -195,6 +195,7 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\nimport \"strings\"\n\ntype a struct { r strings.Reader }", "type a struct {\n\tr strings.Reader\n}"},
 		{"package a\n\ntype a struct { a *a }", "type a struct {\n\ta *a_a\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b struct { c int }", "type a struct {\n\ta struct {\n\t\tc int\n\t}\n}"},
+		{"package a\n\ntype a struct { a func(b) c }\ntype b struct { c int }\ntype c int", "type a struct {\n\ta func(struct {\n\t\tc int\n\t}) int\n}"},
 	} {
 		var buf strings.Builder
 
