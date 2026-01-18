@@ -216,8 +216,14 @@ func structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 	var fields []*ast.Field
 
 	for field := range fieldsFn() {
+		var name []*ast.Ident
+
+		if n := field.Name(); n != "" {
+			name = []*ast.Ident{ast.NewIdent(field.Name())}
+		}
+
 		fields = append(fields, &ast.Field{
-			Names: []*ast.Ident{ast.NewIdent(field.Name())},
+			Names: name,
 			Type:  fieldToType(field.Type()),
 		})
 	}
