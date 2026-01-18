@@ -280,6 +280,31 @@ func fieldToType(typ types.Type) ast.Expr {
 				List: structFieldList(t.Results().Variables),
 			},
 		}
+	case *types.Interface:
+		var fields []*ast.Field
+
+		for f := range t.EmbeddedTypes() {
+			fields = append(fields, &ast.Field{
+				Type: fieldToType(f),
+			})
+		}
+
+		for fn := range t.ExplicitMethods() {
+			typ := fieldToType(fn.Signature()).(*ast.FuncType)
+
+			typ.Func = token.NoPos
+
+			fields = append(fields, &ast.Field{
+				Names: []*ast.Ident{ast.NewIdent(fn.Name())},
+				Type:  typ,
+			})
+		}
+
+		return &ast.InterfaceType{
+			Methods: &ast.FieldList{
+				List: fields,
+			},
+		}
 	case *types.Basic:
 		return ast.NewIdent(t.Name())
 	}
