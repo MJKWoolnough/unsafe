@@ -200,7 +200,7 @@ func (b *builder) conStruct(name string, str *types.Struct) *ast.GenDecl {
 				Name: ast.NewIdent(typeName(name)),
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
-						List: structFieldList(str),
+						List: structFieldList(str.Fields),
 					},
 				},
 			},
@@ -212,10 +212,10 @@ func typeName(name string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(name, "_", "__"), ".", "_"), "/", "_")
 }
 
-func structFieldList(str *types.Struct) []*ast.Field {
+func structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 	var fields []*ast.Field
 
-	for field := range str.Fields() {
+	for field := range fieldsFn() {
 		fields = append(fields, &ast.Field{
 			Names: []*ast.Ident{ast.NewIdent(field.Name())},
 			Type:  fieldToType(field.Type()),
@@ -262,7 +262,7 @@ func fieldToType(typ types.Type) ast.Expr {
 
 		return &ast.StructType{
 			Fields: &ast.FieldList{
-				List: structFieldList(t),
+				List: structFieldList(t.Fields),
 			},
 		}
 	case *types.Basic:
