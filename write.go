@@ -265,6 +265,15 @@ func fieldToType(typ types.Type) ast.Expr {
 				List: structFieldList(t.Fields),
 			},
 		}
+	case *types.Signature:
+		return &ast.FuncType{
+			Params: &ast.FieldList{
+				List: structFieldList(t.Params().Variables),
+			},
+			Results: &ast.FieldList{
+				List: structFieldList(t.Results().Variables),
+			},
+		}
 	case *types.Basic:
 		return ast.NewIdent(t.Name())
 	}
