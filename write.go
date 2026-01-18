@@ -353,6 +353,24 @@ func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
 			elem = t.Elem()
 		case *types.Slice:
 			elem = t.Elem()
+		case *types.Signature:
+			for typ := range t.Params().Variables() {
+				for str := range getStructsFromType(typ.Type()) {
+					if !yield(str) {
+						return
+					}
+				}
+			}
+
+			for typ := range t.Results().Variables() {
+				for str := range getStructsFromType(typ.Type()) {
+					if !yield(str) {
+						return
+					}
+				}
+			}
+
+			return
 		default:
 			return
 		}
