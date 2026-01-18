@@ -138,6 +138,22 @@ func TestIsStructRecursive(t *testing.T) {
 			"package a\n\ntype a struct {B [2]*a}",
 			true,
 		},
+		{
+			"package a\n\ntype a struct {b func() int}",
+			false,
+		},
+		{
+			"package a\n\ntype a struct {b func() a}",
+			true,
+		},
+		{
+			"package a\n\ntype a struct {b func(int) }",
+			false,
+		},
+		{
+			"package a\n\ntype a struct {b func(a) }",
+			true,
+		},
 	} {
 		if self := parseType(t, test.input); isStructRecursive(self, map[*types.Struct]bool{self: true}) != test.isRecursive {
 			t.Errorf("test %d: didn't get expected recursive value: %v", n+1, test.isRecursive)
