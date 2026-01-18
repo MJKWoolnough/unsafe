@@ -371,6 +371,22 @@ func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
 			}
 
 			return
+		case *types.Interface:
+			for typ := range t.EmbeddedTypes() {
+				for str := range getStructsFromType(typ) {
+					if !yield(str) {
+						return
+					}
+				}
+			}
+
+			for fn := range t.ExplicitMethods() {
+				for str := range getStructsFromType(fn.Signature()) {
+					if !yield(str) {
+						return
+					}
+				}
+			}
 		default:
 			return
 		}
