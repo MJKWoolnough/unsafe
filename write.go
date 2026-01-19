@@ -212,6 +212,10 @@ func typeName(name string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(name, "_", "__"), ".", "_"), "/", "_")
 }
 
+func newTypeName(name *types.TypeName) *ast.Ident {
+	return ast.NewIdent(typeName(name.Pkg().Path() + "." + name.Name()))
+}
+
 func structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 	var fields []*ast.Field
 
@@ -263,7 +267,7 @@ func fieldToType(typ types.Type) ast.Expr {
 		}
 	case *types.Struct:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			return ast.NewIdent(typeName(named.Obj().Pkg().Path() + "." + named.Obj().Name()))
+			return newTypeName(named.Obj())
 		}
 
 		return &ast.StructType{
@@ -282,7 +286,7 @@ func fieldToType(typ types.Type) ast.Expr {
 		}
 	case *types.Interface:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			return ast.NewIdent(typeName(named.Obj().Pkg().Path() + "." + named.Obj().Name()))
+			return newTypeName(named.Obj())
 		}
 
 		var fields []*ast.Field
