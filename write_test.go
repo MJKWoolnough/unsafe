@@ -211,22 +211,6 @@ func parseType(t *testing.T, input string) types.Type {
 	return parseFile(t, input).Scope().Lookup("a").Type()
 }
 
-func TestBuildFunc(t *testing.T) {
-	for n, test := range [...]struct {
-		typ, res string
-	}{
-		{"strings.Reader", "func makestrings_Reader(x *strings.Reader) *strings_Reader {\n\treturn (*strings_Reader)(unsafe.Pointer(x))\n}"},
-	} {
-		var buf strings.Builder
-
-		format.Node(&buf, token.NewFileSet(), buildFunc(test.typ))
-
-		if str := buf.String(); str != test.res {
-			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
-		}
-	}
-}
-
 func TestConStruct(t *testing.T) {
 	for n, test := range [...]struct {
 		input, output string
@@ -254,18 +238,13 @@ func TestConStruct(t *testing.T) {
 }
 
 func TestWriteType(t *testing.T) {
-	var buf strings.Builder
-
-	b, err := newBuilder(".")
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	if err := b.WriteType(&buf, "e", "strings.Reader"); err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	const expectation = `package e
+	for n, test := range [...]struct {
+		typeName []string
+		output   string
+	}{
+		{
+			[]string{"strings.Reader"},
+			`package e
 
 import (
 	"strings"
@@ -281,9 +260,71 @@ type strings_Reader struct {
 func makestrings_Reader(x *strings.Reader) *strings_Reader {
 	return (*strings_Reader)(unsafe.Pointer(x))
 }
-`
+`,
+		},
+		{
+			[]string{"go/types.Package", "go/token.FileSet"},
+			`package e
 
-	if str := buf.String(); str != expectation {
-		t.Errorf("expecting output:\n%s\n\ngot:\n%s", expectation, str)
+import (
+	"go/token"
+	"go/types"
+	"unsafe"
+)
+
+type go_types_Package struct {
+	path      string
+	name      string
+	scope     *types.Scope
+	imports   []*types.Package
+	complete  bool
+	fake      bool
+	cgo       bool
+	goVersion string
+}
+type go_token_FileSet struct {
+	mutex sync.RWMutex
+	base  int
+	tree  struct {
+		root *go_token_node
+	}
+	last atomic.Pointer
+}
+type go_token_node struct {
+	parent *go_token_node
+	left   *go_token_node
+	right  *go_token_node
+	file   *token.File
+	key    struct {
+		start int
+		end   int
+	}
+	balance int32
+	height  int32
+}
+
+func makego_types_Package(x *types.Package) *go_types_Package {
+	return (*go_types_Package)(unsafe.Pointer(x))
+}
+func makego_token_FileSet(x *token.FileSet) *go_token_FileSet {
+	return (*go_token_FileSet)(unsafe.Pointer(x))
+}
+`,
+		},
+	} {
+		b, err := newBuilder(".")
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		var buf strings.Builder
+
+		if err := b.WriteType(&buf, "e", test.typeName...); err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if str := buf.String(); str != test.output {
+			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
+		}
 	}
 }
