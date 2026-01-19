@@ -262,7 +262,7 @@ func fieldToType(typ types.Type) ast.Expr {
 			Elt: fieldToType(t.Elem()),
 		}
 	case *types.Struct:
-		if isStructRecursive(t, map[*types.Struct]bool{t: true}) {
+		if isTypeRecursive(typ, map[types.Type]bool{}) {
 			return ast.NewIdent(typeName(named.Obj().Pkg().Path() + "." + named.Obj().Name()))
 		}
 
@@ -312,89 +312,60 @@ func fieldToType(typ types.Type) ast.Expr {
 	return nil
 }
 
-func isStructRecursive(str *types.Struct, found map[*types.Struct]bool) bool {
-	for field := range str.Fields() {
-		for str := range getStructsFromType(field.Type()) {
-			if recursive, done := found[str]; recursive {
-				return true
-			} else if !done {
-				found[str] = false
+func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
+	f, ok := found[typ]
+	if ok {
+		return f
+	}
 
-				if isStructRecursive(str, found) {
-					return true
-				}
+	found[typ] = len(found) == 0
+
+	switch t := typ.Underlying().(type) {
+	case *types.Struct:
+		for field := range t.Fields() {
+			if isTypeRecursive(field.Type(), found) {
+				return true
+			}
+		}
+	case *types.Pointer:
+		return isTypeRecursive(t.Elem(), found)
+	case *types.Map:
+		if isTypeRecursive(t.Key(), found) {
+			return true
+		}
+
+		return isTypeRecursive(t.Elem(), found)
+	case *types.Array:
+		return isTypeRecursive(t.Elem(), found)
+	case *types.Slice:
+		return isTypeRecursive(t.Elem(), found)
+	case *types.Signature:
+		for typ := range t.Params().Variables() {
+			if isTypeRecursive(typ.Type(), found) {
+				return true
+			}
+		}
+
+		for typ := range t.Results().Variables() {
+			if isTypeRecursive(typ.Type(), found) {
+				return true
+			}
+		}
+	case *types.Interface:
+		for typ := range t.EmbeddedTypes() {
+			if isTypeRecursive(typ, found) {
+				return true
+			}
+		}
+
+		for fn := range t.ExplicitMethods() {
+			if isTypeRecursive(fn.Signature(), found) {
+				return true
 			}
 		}
 	}
 
 	return false
-}
-
-func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
-	return func(yield func(*types.Struct) bool) {
-		var elem types.Type
-
-		switch t := typ.Underlying().(type) {
-		case *types.Struct:
-			yield(t)
-
-			return
-		case *types.Pointer:
-			elem = t.Elem()
-		case *types.Map:
-			for str := range getStructsFromType(t.Key()) {
-				if !yield(str) {
-					return
-				}
-			}
-
-			elem = t.Elem()
-		case *types.Array:
-			elem = t.Elem()
-		case *types.Slice:
-			elem = t.Elem()
-		case *types.Signature:
-			for typ := range t.Params().Variables() {
-				for str := range getStructsFromType(typ.Type()) {
-					if !yield(str) {
-						return
-					}
-				}
-			}
-
-			for typ := range t.Results().Variables() {
-				for str := range getStructsFromType(typ.Type()) {
-					if !yield(str) {
-						return
-					}
-				}
-			}
-
-			return
-		case *types.Interface:
-			for typ := range t.EmbeddedTypes() {
-				for str := range getStructsFromType(typ) {
-					if !yield(str) {
-						return
-					}
-				}
-			}
-
-			for fn := range t.ExplicitMethods() {
-				for str := range getStructsFromType(fn.Signature()) {
-					if !yield(str) {
-						return
-					}
-				}
-			}
-
-			return
-		default:
-			return
-		}
-
-		getStructsFromType(elem)(yield)
-	}
 }
 
 func determineMethods(types []string) []ast.Decl {

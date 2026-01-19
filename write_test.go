@@ -105,7 +105,7 @@ func TestFieldToType(t *testing.T) {
 	}
 }
 
-func TestIsStructRecursive(t *testing.T) {
+func TestIsRecursive(t *testing.T) {
 	for n, test := range [...]struct {
 		input       string
 		isRecursive bool
@@ -155,7 +155,7 @@ func TestIsStructRecursive(t *testing.T) {
 			true,
 		},
 	} {
-		if self := parseType(t, test.input); isStructRecursive(self, map[*types.Struct]bool{self: true}) != test.isRecursive {
+		if self := parseType(t, test.input); isTypeRecursive(self, map[types.Type]bool{}) != test.isRecursive {
 			t.Errorf("test %d: didn't get expected recursive value: %v", n+1, test.isRecursive)
 		}
 	}
@@ -184,8 +184,8 @@ func parseFile(t *testing.T, input string) *types.Package {
 	return pkg
 }
 
-func parseType(t *testing.T, input string) *types.Struct {
-	return parseFile(t, input).Scope().Lookup("a").Type().Underlying().(*types.Struct)
+func parseType(t *testing.T, input string) types.Type {
+	return parseFile(t, input).Scope().Lookup("a").Type()
 }
 
 func TestBuildFunc(t *testing.T) {
@@ -220,7 +220,7 @@ func TestConStruct(t *testing.T) {
 
 		var b builder
 
-		format.Node(&buf, token.NewFileSet(), b.conStruct("a", self))
+		format.Node(&buf, token.NewFileSet(), b.conStruct("a", self.Underlying().(*types.Struct)))
 
 		if str := buf.String(); str != test.output {
 			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
