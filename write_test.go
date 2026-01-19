@@ -95,9 +95,12 @@ func TestFieldToType(t *testing.T) {
 			res: "[3]complex128",
 		},
 	} {
-		var buf strings.Builder
+		var (
+			buf strings.Builder
+			b   builder
+		)
 
-		format.Node(&buf, token.NewFileSet(), fieldToType(test.typ))
+		format.Node(&buf, token.NewFileSet(), b.fieldToType(test.typ))
 
 		if str := buf.String(); str != test.res {
 			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)

@@ -18,12 +18,18 @@ import (
 	"vimagination.zapto.org/gotypes"
 )
 
+type named struct {
+	name string
+	typ  types.Type
+}
+
 type builder struct {
-	mod     *gotypes.ModFile
-	imports map[string]*types.Package
-	structs map[string]ast.Decl
-	pkg     *types.Package
-	fset    *token.FileSet
+	mod      *gotypes.ModFile
+	imports  map[string]*types.Package
+	structs  map[string]ast.Decl
+	required []named
+	pkg      *types.Package
+	fset     *token.FileSet
 }
 
 func newBuilder(module string) (*builder, error) {
@@ -55,21 +61,36 @@ func (b *builder) WriteType(w io.Writer, packagename string, typeNames ...string
 	return format.Node(w, b.fset, file)
 }
 
-func (b *builder) genAST(packageName string, types []string) (*ast.File, error) {
+func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, error) {
 	imps := gotypes.Imports(b.pkg)
 
-	for _, typeName := range types {
+	for _, typeName := range typeNames {
 		str, err := b.getStruct(imps, typeName)
 		if err != nil {
 			return nil, err
 		}
 
-		b.structs[typeName] = b.conStruct(typeName, str)
+		b.required = append(b.required, named{typeName, str})
+	}
+
+	for len(b.required) > 0 {
+		t := b.required[0]
+		b.required = b.required[1:]
+		name := t.name
+
+		switch t := t.typ.(type) {
+		case *types.Struct:
+			if _, ok := b.structs[name]; ok {
+				continue
+			}
+
+			b.structs[name] = b.conStruct(name, t)
+		}
 	}
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), determineMethods(types)...),
+		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), determineMethods(typeNames)...),
 	}, nil
 }
 
@@ -200,7 +221,7 @@ func (b *builder) conStruct(name string, str *types.Struct) *ast.GenDecl {
 				Name: ast.NewIdent(typeName(name)),
 				Type: &ast.StructType{
 					Fields: &ast.FieldList{
-						List: structFieldList(str.Fields),
+						List: b.structFieldList(str.Fields),
 					},
 				},
 			},
@@ -216,7 +237,7 @@ func newTypeName(name *types.TypeName) *ast.Ident {
 	return ast.NewIdent(typeName(name.Pkg().Path() + "." + name.Name()))
 }
 
-func structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
+func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 	var fields []*ast.Field
 
 	for field := range fieldsFn() {
@@ -228,77 +249,81 @@ func structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 
 		fields = append(fields, &ast.Field{
 			Names: name,
-			Type:  fieldToType(field.Type()),
+			Type:  b.fieldToType(field.Type()),
 		})
 	}
 
 	return fields
 }
 
-func fieldToType(typ types.Type) ast.Expr {
-	named, isNamed := typ.(*types.Named)
-	if isNamed && named.Obj().Exported() {
+func (b *builder) fieldToType(typ types.Type) ast.Expr {
+	namedType, isNamed := typ.(*types.Named)
+	if isNamed && namedType.Obj().Exported() {
 		return &ast.SelectorExpr{
-			X:   ast.NewIdent(named.Obj().Pkg().Name()),
-			Sel: ast.NewIdent(named.Obj().Name()),
+			X:   ast.NewIdent(namedType.Obj().Pkg().Name()),
+			Sel: ast.NewIdent(namedType.Obj().Name()),
 		}
 	}
 
 	switch t := typ.Underlying().(type) {
 	case *types.Pointer:
 		return &ast.StarExpr{
-			X: fieldToType(t.Elem()),
+			X: b.fieldToType(t.Elem()),
 		}
 	case *types.Map:
 		return &ast.MapType{
-			Key:   fieldToType(t.Key()),
-			Value: fieldToType(t.Elem()),
+			Key:   b.fieldToType(t.Key()),
+			Value: b.fieldToType(t.Elem()),
 		}
 	case *types.Array:
 		return &ast.ArrayType{
 			Len: &ast.BasicLit{
 				Value: strconv.FormatInt(t.Len(), 10),
 			},
-			Elt: fieldToType(t.Elem()),
+			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Slice:
 		return &ast.ArrayType{
-			Elt: fieldToType(t.Elem()),
+			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Struct:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			return newTypeName(named.Obj())
+			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), t})
+
+			return newTypeName(namedType.Obj())
 		}
 
 		return &ast.StructType{
 			Fields: &ast.FieldList{
-				List: structFieldList(t.Fields),
+				List: b.structFieldList(t.Fields),
 			},
 		}
 	case *types.Signature:
 		return &ast.FuncType{
 			Params: &ast.FieldList{
-				List: structFieldList(t.Params().Variables),
+				List: b.structFieldList(t.Params().Variables),
 			},
 			Results: &ast.FieldList{
-				List: structFieldList(t.Results().Variables),
+				List: b.structFieldList(t.Results().Variables),
 			},
 		}
 	case *types.Interface:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			return newTypeName(named.Obj())
+			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), t})
+
+			return newTypeName(namedType.Obj())
 		}
 
 		var fields []*ast.Field
 
 		for f := range t.EmbeddedTypes() {
 			fields = append(fields, &ast.Field{
-				Type: fieldToType(f),
+				Type: b.fieldToType(f),
 			})
 		}
 
 		for fn := range t.ExplicitMethods() {
-			typ := fieldToType(fn.Signature()).(*ast.FuncType)
+			typ := b.fieldToType(fn.Signature()).(*ast.FuncType)
 
 			typ.Func = token.NoPos
 
