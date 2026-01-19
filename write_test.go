@@ -213,6 +213,8 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\ntype a struct { a b }\ntype b struct { c int }", "type a struct {\n\ta struct {\n\t\tc int\n\t}\n}"},
 		{"package a\n\ntype a struct { a func(b) c }\ntype b struct { c int }\ntype c int", "type a struct {\n\ta func(struct {\n\t\tc int\n\t}) int\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b interface {\n\tc\n\tA() int\n\tinterface {E()}\n}\ntype c interface {\n\tB(bool, float32) string\n}", "type a struct {\n\ta interface {\n\t\tinterface {\n\t\t\tB(bool, float32) string\n\t\t}\n\t\tinterface {\n\t\t\tE()\n\t\t}\n\t\tA() int\n\t}\n}"},
+		{"package a\n\ntype a struct { a b }\ntype b interface {C() int}", "type a struct {\n\ta interface {\n\t\tC() int\n\t}\n}"},
+		{"package a\n\ntype a struct { a b }\ntype b interface {C() b}", "type a struct {\n\ta a_b\n}"},
 	} {
 		var buf strings.Builder
 
