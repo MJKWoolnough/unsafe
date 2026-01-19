@@ -281,6 +281,10 @@ func fieldToType(typ types.Type) ast.Expr {
 			},
 		}
 	case *types.Interface:
+		if isTypeRecursive(typ, map[types.Type]bool{}) {
+			return ast.NewIdent(typeName(named.Obj().Pkg().Path() + "." + named.Obj().Name()))
+		}
+
 		var fields []*ast.Field
 
 		for f := range t.EmbeddedTypes() {
