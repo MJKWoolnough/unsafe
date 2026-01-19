@@ -387,6 +387,8 @@ func getStructsFromType(typ types.Type) iter.Seq[*types.Struct] {
 					}
 				}
 			}
+
+			return
 		default:
 			return
 		}
