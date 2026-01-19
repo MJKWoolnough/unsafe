@@ -28,6 +28,7 @@ type builder struct {
 	imports  map[string]*types.Package
 	structs  map[string]ast.Decl
 	required []named
+	methods  []ast.Decl
 	pkg      *types.Package
 	fset     *token.FileSet
 }
@@ -78,23 +79,27 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		b.required = b.required[1:]
 		name := t.name
 
-		switch t := t.typ.(type) {
+		switch typ := t.typ.Underlying().(type) {
 		case *types.Struct:
 			if _, ok := b.structs[name]; ok {
 				continue
 			}
 
-			b.structs[name] = b.conStruct(name, t)
+			b.structs[name] = b.conStruct(name, typ)
+
+			if slices.Contains(typeNames, name) {
+				b.methods = append(b.methods, buildFunc(t.typ))
+			}
 		}
 	}
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), determineMethods(typeNames)...),
+		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), b.methods...),
 	}, nil
 }
 
-func (b *builder) getStruct(imps map[string]*types.Package, typename string) (*types.Struct, error) {
+func (b *builder) getStruct(imps map[string]*types.Package, typename string) (types.Type, error) {
 	genPos := strings.IndexByte(typename, '[')
 	if genPos == -1 {
 		genPos = len(typename)
@@ -123,14 +128,14 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (*t
 		return nil, fmt.Errorf("%w: %s", ErrNoType, typename)
 	}
 
-	s, ok := obj.Type().Underlying().(*types.Struct)
+	_, ok = obj.Type().Underlying().(*types.Struct)
 	if !ok {
 		return nil, ErrNotStruct
 	}
 
 	b.imports[typename[:pos]] = pkg
 
-	return s, nil
+	return obj.Type(), nil
 }
 
 func (b *builder) genImports() *ast.GenDecl {
@@ -288,7 +293,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 		}
 	case *types.Struct:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), t})
+			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
 
 			return newTypeName(namedType.Obj())
 		}
@@ -309,7 +314,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 		}
 	case *types.Interface:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), t})
+			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
 
 			return newTypeName(namedType.Obj())
 		}
@@ -401,26 +406,22 @@ func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
 	return false
 }
 
-func determineMethods(types []string) []ast.Decl {
-	var decls []ast.Decl
+func buildFunc(typ types.Type) *ast.FuncDecl {
+	named := typ.(*types.Named).Obj()
+	tname := typeName(named.Pkg().Path() + "." + named.Name())
 
-	for _, typ := range types {
-		decls = append(decls, buildFunc(typ))
-	}
-
-	return decls
-}
-
-func buildFunc(typ string) *ast.FuncDecl {
 	return &ast.FuncDecl{
-		Name: ast.NewIdent("make" + typeName(typ)),
+		Name: ast.NewIdent("make" + tname),
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					{
 						Names: []*ast.Ident{ast.NewIdent("x")},
 						Type: &ast.StarExpr{
-							X: ast.NewIdent(typ),
+							X: &ast.SelectorExpr{
+								X:   ast.NewIdent(named.Pkg().Name()),
+								Sel: ast.NewIdent(named.Name()),
+							},
 						},
 					},
 				},
@@ -429,7 +430,7 @@ func buildFunc(typ string) *ast.FuncDecl {
 				List: []*ast.Field{
 					{
 						Type: &ast.StarExpr{
-							X: ast.NewIdent(typeName(typ)),
+							X: ast.NewIdent(tname),
 						},
 					},
 				},
@@ -442,7 +443,7 @@ func buildFunc(typ string) *ast.FuncDecl {
 						&ast.CallExpr{
 							Fun: &ast.ParenExpr{
 								X: &ast.StarExpr{
-									X: ast.NewIdent(typeName(typ)),
+									X: ast.NewIdent(tname),
 								},
 							},
 							Args: []ast.Expr{
