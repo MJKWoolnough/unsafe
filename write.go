@@ -2,6 +2,7 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -159,7 +160,7 @@ func (b *builder) genImports() *ast.GenDecl {
 }
 
 func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
-	imps := map[string]*ast.ImportSpec{}
+	imps := map[string]ast.Spec{}
 
 	for _, imp := range b.imports {
 		if _, isExt := b.mod.Imports[imp.Path()]; isExt == ext {
@@ -197,23 +198,27 @@ func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec
 		}
 	}
 
-	keys := slices.Collect(maps.Keys(imps))
-
-	slices.Sort(keys)
-
-	var specs []ast.Spec
-
-	for _, key := range keys {
-		specs = append(specs, imps[key])
-	}
-
-	return specs
+	return sortedValues(imps)
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
 	_, has := m[k]
 
 	return has
+}
+
+func sortedValues[K cmp.Ordered, V any](m map[K]V) []V {
+	keys := slices.Collect(maps.Keys(m))
+
+	slices.Sort(keys)
+
+	var specs []V
+
+	for _, key := range keys {
+		specs = append(specs, m[key])
+	}
+
+	return specs
 }
 
 func (b *builder) determineStructs(structs map[string]types.Object) []ast.Decl {
