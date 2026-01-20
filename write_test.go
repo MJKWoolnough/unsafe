@@ -250,7 +250,7 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\ntype a struct { a b }\ntype b interface {\n\tc\n\tA() int\n\tinterface {E()}\n}\ntype c interface {\n\tB(bool, float32) string\n}", "type a struct {\n\ta interface {\n\t\tinterface {\n\t\t\tB(bool, float32) string\n\t\t}\n\t\tinterface {\n\t\t\tE()\n\t\t}\n\t\tA() int\n\t}\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b interface {C() int}", "type a struct {\n\ta interface {\n\t\tC() int\n\t}\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b interface {C() b}", "type a struct {\n\ta a_b\n}"},
-		{"package a\n\nimport \"sync\"\n\ntype a = sync.Mutex", "type a struct {\n\ta a_b\n}"},
+		{"package a\n\nimport \"sync\"\n\ntype a = sync.Mutex", "type a struct {\n\t_ struct {\n\t}\n\tmu struct {\n\t\tstate int32\n\t\tsema  uint32\n\t}\n}"},
 	} {
 		var buf strings.Builder
 
@@ -301,16 +301,6 @@ import (
 	"unsafe"
 )
 
-type go_types_Package struct {
-	path      string
-	name      string
-	scope     *types.Scope
-	imports   []*types.Package
-	complete  bool
-	fake      bool
-	cgo       bool
-	goVersion string
-}
 type go_token_FileSet struct {
 	mutex sync.RWMutex
 	base  int
@@ -330,6 +320,16 @@ type go_token_node struct {
 	}
 	balance int32
 	height  int32
+}
+type go_types_Package struct {
+	path      string
+	name      string
+	scope     *types.Scope
+	imports   []*types.Package
+	complete  bool
+	fake      bool
+	cgo       bool
+	goVersion string
 }
 
 func makego_types_Package(x *types.Package) *go_types_Package {
