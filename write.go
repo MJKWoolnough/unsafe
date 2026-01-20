@@ -221,16 +221,6 @@ func sortedValues[K cmp.Ordered, V any](m map[K]V) []V {
 	return specs
 }
 
-func (b *builder) determineStructs(structs map[string]types.Object) []ast.Decl {
-	var decls []ast.Decl
-
-	for name, obj := range structs {
-		decls = append(decls, b.conStruct(name, obj.Type().Underlying().(*types.Struct)))
-	}
-
-	return decls
-}
-
 func (b *builder) conStruct(name string, str *types.Struct) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok: token.TYPE,
