@@ -93,7 +93,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 			b.structs[name] = b.conStruct(name, typ)
 
 			if slices.Contains(typeNames, name) {
-				b.methods = append(b.methods, buildFunc(t.typ))
+				b.methods = append(b.methods, b.buildFunc(t.typ))
 			}
 		}
 	}
@@ -409,7 +409,7 @@ func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
 	return false
 }
 
-func buildFunc(typ types.Type) *ast.FuncDecl {
+func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 	named := typ.(*types.Named).Obj()
 	tname := typeName(named.Pkg().Path() + "." + named.Name())
 

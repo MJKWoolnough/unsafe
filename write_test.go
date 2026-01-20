@@ -230,7 +230,7 @@ func TestBuildFunc(t *testing.T) {
 		if err != nil {
 			t.Errorf("test %d: unexpected error: %s", n+1, err)
 		} else {
-			format.Node(&buf, token.NewFileSet(), buildFunc(str))
+			format.Node(&buf, token.NewFileSet(), b.buildFunc(str))
 
 			if str := buf.String(); str != test.res {
 				t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
