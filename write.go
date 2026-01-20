@@ -100,7 +100,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, slices.Collect(maps.Values(b.structs))...), b.methods...),
+		Decls: append(append([]ast.Decl{b.genImports()}, sortedValues(b.structs)...), b.methods...),
 	}, nil
 }
 
