@@ -482,7 +482,6 @@ var (
 	ErrNoModuleType = errors.New("module-less type")
 	ErrNoModule     = errors.New("module not imported")
 	ErrNoType       = errors.New("no type found")
-	ErrNoTypes      = errors.New("no non-internal types found")
 	ErrNotStruct    = errors.New("not a struct type")
 	ErrInternal     = errors.New("cannot process internal type")
 )
