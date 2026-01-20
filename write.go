@@ -53,8 +53,12 @@ func newBuilder(module string) (*builder, error) {
 	}, nil
 }
 
-func (b *builder) WriteType(w io.Writer, packagename string, typeNames ...string) error {
-	file, err := b.genAST(packagename, typeNames)
+func (b *builder) WriteType(w io.Writer, packageName string, typeNames ...string) error {
+	if packageName == "" {
+		packageName = b.pkg.Name()
+	}
+
+	file, err := b.genAST(packageName, typeNames)
 	if err != nil {
 		return err
 	}
