@@ -118,7 +118,7 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 		return nil, fmt.Errorf("%w: %s", ErrNoModuleType, typename)
 	}
 
-	if strings.Contains(typename[:pos], "/internal/") || strings.HasSuffix(typename[:pos], "/internal") || strings.HasPrefix(typename, "internal/") {
+	if isInternal(typename[:pos]) {
 		return nil, ErrInternal
 	}
 
@@ -140,6 +140,10 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 	b.imports[typename[:pos]] = pkg
 
 	return obj.Type(), nil
+}
+
+func isInternal(path string) bool {
+	return strings.Contains(path, "/internal/") || strings.HasSuffix(path, "/internal") || strings.HasPrefix(path, "internal/")
 }
 
 func (b *builder) genImports() *ast.GenDecl {
@@ -267,7 +271,7 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.F
 
 func (b *builder) fieldToType(typ types.Type) ast.Expr {
 	namedType, isNamed := typ.(*types.Named)
-	if isNamed && namedType.Obj().Exported() {
+	if isNamed && namedType.Obj().Exported() && !isInternal(namedType.Obj().Pkg().Path()) {
 		return &ast.SelectorExpr{
 			X:   ast.NewIdent(namedType.Obj().Pkg().Name()),
 			Sel: ast.NewIdent(namedType.Obj().Name()),
