@@ -250,6 +250,7 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\ntype a struct { a b }\ntype b interface {\n\tc\n\tA() int\n\tinterface {E()}\n}\ntype c interface {\n\tB(bool, float32) string\n}", "type a struct {\n\ta interface {\n\t\tinterface {\n\t\t\tB(bool, float32) string\n\t\t}\n\t\tinterface {\n\t\t\tE()\n\t\t}\n\t\tA() int\n\t}\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b interface {C() int}", "type a struct {\n\ta interface {\n\t\tC() int\n\t}\n}"},
 		{"package a\n\ntype a struct { a b }\ntype b interface {C() b}", "type a struct {\n\ta a_b\n}"},
+		{"package a\n\ntype a struct { b }\ntype b interface {C() b}", "type a struct {\n\tb a_b\n}"},
 		{"package a\n\nimport \"sync\"\n\ntype a = sync.Mutex", "type a struct {\n\t_ struct {\n\t}\n\tmu struct {\n\t\tstate int32\n\t\tsema  uint32\n\t}\n}"},
 	} {
 		var buf strings.Builder
