@@ -40,7 +40,6 @@ type builder struct {
 	required []named
 	methods  []ast.Decl
 	pkg      *types.Package
-	fset     *token.FileSet
 	pos
 }
 
@@ -60,7 +59,6 @@ func newBuilder(module string) (*builder, error) {
 		imports: make(map[string]*types.Package),
 		structs: make(map[string]ast.Decl),
 		pkg:     pkg,
-		fset:    token.NewFileSet(),
 	}, nil
 }
 
@@ -69,12 +67,19 @@ func (b *builder) WriteType(w io.Writer, packageName string, typeNames ...string
 		packageName = b.pkg.Name()
 	}
 
+	b.pos = []int{0, 1}
+
 	file, err := b.genAST(packageName, typeNames)
 	if err != nil {
 		return err
 	}
 
-	return format.Node(w, b.fset, file)
+	fset := token.NewFileSet()
+	wsfile := fset.AddFile("out.go", 1, len(b.pos))
+
+	wsfile.SetLines(b.pos)
+
+	return format.Node(w, fset, file)
 }
 
 func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, error) {
@@ -161,7 +166,13 @@ func (b *builder) genImports() *ast.GenDecl {
 	names := map[string]struct{}{}
 
 	specs := b.processImports(names, false)
+	stdlib := len(specs)
 	specs = append(specs, b.processImports(names, true)...)
+
+	if len(specs) > stdlib {
+		specs[stdlib].(*ast.ImportSpec).Path.ValuePos = b.newLine()
+		fmt.Println(specs[stdlib].(*ast.ImportSpec).Path.ValuePos)
+	}
 
 	return &ast.GenDecl{
 		Tok:   token.IMPORT,
