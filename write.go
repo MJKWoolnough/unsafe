@@ -24,6 +24,15 @@ type named struct {
 	typ  types.Type
 }
 
+type pos []int
+
+func (p *pos) newLine() token.Pos {
+	l := len(*p)
+	*p = append(*p, len(*p), len(*p)+1)
+
+	return token.Pos(l + 1)
+}
+
 type builder struct {
 	mod      *gotypes.ModFile
 	imports  map[string]*types.Package
@@ -32,6 +41,7 @@ type builder struct {
 	methods  []ast.Decl
 	pkg      *types.Package
 	fset     *token.FileSet
+	pos
 }
 
 func newBuilder(module string) (*builder, error) {
