@@ -171,7 +171,6 @@ func (b *builder) genImports() *ast.GenDecl {
 
 	if len(specs) > stdlib {
 		specs[stdlib].(*ast.ImportSpec).Path.ValuePos = b.newLine()
-		fmt.Println(specs[stdlib].(*ast.ImportSpec).Path.ValuePos)
 	}
 
 	return &ast.GenDecl{
