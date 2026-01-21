@@ -341,6 +341,27 @@ func makego_token_FileSet(x *token.FileSet) *go_token_FileSet {
 }
 `,
 		},
+		{
+			[]string{"vimagination.zapto.org/httpreaderat.block"},
+			`package e
+
+import (
+	"unsafe"
+
+	"vimagination.zapto.org/httpreaderat"
+)
+
+type vimagination_zapto_org_httpreaderat_block struct {
+	data string
+	prev *vimagination_zapto_org_httpreaderat_block
+	next *vimagination_zapto_org_httpreaderat_block
+}
+
+func makevimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimagination_zapto_org_httpreaderat_block {
+	return (*vimagination_zapto_org_httpreaderat_block)(unsafe.Pointer(x))
+}
+`,
+		},
 	} {
 		b, err := newBuilder(".")
 		if err != nil {
