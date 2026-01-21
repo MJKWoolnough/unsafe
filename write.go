@@ -170,7 +170,13 @@ func (b *builder) genImports() *ast.GenDecl {
 	specs = append(specs, b.processImports(names, true)...)
 
 	if len(specs) > stdlib {
-		specs[stdlib].(*ast.ImportSpec).Path.ValuePos = b.newLine()
+		imp := specs[stdlib].(*ast.ImportSpec)
+
+		if imp.Name != nil {
+			specs[stdlib].(*ast.ImportSpec).Name.NamePos = b.newLine()
+		} else {
+			specs[stdlib].(*ast.ImportSpec).Path.ValuePos = b.newLine()
+		}
 	}
 
 	return &ast.GenDecl{
