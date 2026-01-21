@@ -299,6 +299,7 @@ func TestBuildFunc(t *testing.T) {
 		typ, res string
 	}{
 		{"strings.Reader", "func makestrings_Reader(x *strings.Reader) *strings_Reader {\n\treturn (*strings_Reader)(unsafe.Pointer(x))\n}"},
+		{"vimagination.zapto.org/httpreaderat.block", "func makevimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimagination_zapto_org_httpreaderat_block {\n\treturn (*vimagination_zapto_org_httpreaderat_block)(unsafe.Pointer(x))\n}"},
 	} {
 		var buf strings.Builder
 
