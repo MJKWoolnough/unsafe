@@ -186,6 +186,21 @@ func (b *builder) genImports() *ast.GenDecl {
 }
 
 func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
+	imps := b.buildImports(names, ext)
+
+	if !ext && !has(imps, "unsafe") {
+		imps["unsafe"] = &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: `"unsafe"`,
+			},
+		}
+	}
+
+	return sortedValues(imps)
+}
+
+func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]ast.Spec {
 	imps := map[string]ast.Spec{}
 
 	for _, imp := range b.imports {
@@ -215,16 +230,7 @@ func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec
 		}
 	}
 
-	if !ext && !has(imps, "unsafe") {
-		imps["unsafe"] = &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: `"unsafe"`,
-			},
-		}
-	}
-
-	return sortedValues(imps)
+	return imps
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
