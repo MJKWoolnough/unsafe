@@ -15,7 +15,7 @@ import (
 	"vimagination.zapto.org/gotypes"
 )
 
-func TestDetermineImports(t *testing.T) {
+func TestGenImports(t *testing.T) {
 	b, err := newBuilder(".")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
