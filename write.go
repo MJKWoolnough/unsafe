@@ -186,6 +186,7 @@ func (b *builder) genImports() *ast.GenDecl {
 }
 
 func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
+	names["unsafe"] = struct{}{}
 	imps := b.buildImports(names, ext)
 
 	if !ext && !has(imps, "unsafe") {
@@ -213,6 +214,8 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 				pos++
 				name = oname + strconv.Itoa(pos)
 			}
+
+			names[name] = struct{}{}
 
 			var aName *ast.Ident
 
