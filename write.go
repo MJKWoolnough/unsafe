@@ -60,9 +60,8 @@ func newBuilder(module string) (*builder, error) {
 	}
 
 	return &builder{
-		mod:     mod,
-		structs: make(map[string]ast.Decl),
-		pkg:     pkg,
+		mod: mod,
+		pkg: pkg,
 	}, nil
 }
 
@@ -87,6 +86,7 @@ func (b *builder) WriteType(w io.Writer, pkgName string, typeNames ...string) er
 }
 
 func (b *builder) init() {
+	b.structs = make(map[string]ast.Decl)
 	b.pos = []int{0, 1}
 	b.imports = map[string]*packageName{"unsafe": {types.NewPackage("unsafe", "unsafe"), ast.NewIdent("unsafe")}}
 }
