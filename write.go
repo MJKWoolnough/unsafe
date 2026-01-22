@@ -71,8 +71,7 @@ func (b *builder) WriteType(w io.Writer, pkgName string, typeNames ...string) er
 		pkgName = b.pkg.Name()
 	}
 
-	b.pos = []int{0, 1}
-	b.imports = map[string]*packageName{"unsafe": {types.NewPackage("unsafe", "unsafe"), ast.NewIdent("unsafe")}}
+	b.init()
 
 	file, err := b.genAST(pkgName, typeNames)
 	if err != nil {
@@ -85,6 +84,11 @@ func (b *builder) WriteType(w io.Writer, pkgName string, typeNames ...string) er
 	wsfile.SetLines(b.pos)
 
 	return format.Node(w, fset, file)
+}
+
+func (b *builder) init() {
+	b.pos = []int{0, 1}
+	b.imports = map[string]*packageName{"unsafe": {types.NewPackage("unsafe", "unsafe"), ast.NewIdent("unsafe")}}
 }
 
 func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, error) {
