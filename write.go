@@ -33,9 +33,14 @@ func (p *pos) newLine() token.Pos {
 	return token.Pos(l + 1)
 }
 
+type packageName struct {
+	*types.Package
+	*ast.Ident
+}
+
 type builder struct {
 	mod      *gotypes.ModFile
-	imports  map[string]*types.Package
+	imports  map[string]*packageName
 	structs  map[string]ast.Decl
 	required []named
 	methods  []ast.Decl
@@ -56,20 +61,20 @@ func newBuilder(module string) (*builder, error) {
 
 	return &builder{
 		mod:     mod,
-		imports: make(map[string]*types.Package),
 		structs: make(map[string]ast.Decl),
 		pkg:     pkg,
 	}, nil
 }
 
-func (b *builder) WriteType(w io.Writer, packageName string, typeNames ...string) error {
-	if packageName == "" {
-		packageName = b.pkg.Name()
+func (b *builder) WriteType(w io.Writer, pkgName string, typeNames ...string) error {
+	if pkgName == "" {
+		pkgName = b.pkg.Name()
 	}
 
 	b.pos = []int{0, 1}
+	b.imports = map[string]*packageName{"unsafe": {types.NewPackage("unsafe", "unsafe"), ast.NewIdent("unsafe")}}
 
-	file, err := b.genAST(packageName, typeNames)
+	file, err := b.genAST(pkgName, typeNames)
 	if err != nil {
 		return err
 	}
@@ -153,7 +158,7 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 		return nil, ErrNotStruct
 	}
 
-	b.imports[typename[:pos]] = pkg
+	b.imports[typename[:pos]] = &packageName{pkg, ast.NewIdent("")}
 
 	return obj.Type(), nil
 }
@@ -186,17 +191,7 @@ func (b *builder) genImports() *ast.GenDecl {
 }
 
 func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
-	names["unsafe"] = struct{}{}
 	imps := b.buildImports(names, ext)
-
-	if !ext && !has(imps, "unsafe") {
-		imps["unsafe"] = &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: `"unsafe"`,
-			},
-		}
-	}
 
 	return sortedValues(imps)
 }
@@ -206,7 +201,7 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 
 	for _, imp := range b.imports {
 		if _, isExt := b.mod.Imports[imp.Path()]; isExt == ext {
-			oname := imp.Name()
+			oname := imp.Package.Name()
 			name := oname
 			pos := 0
 
@@ -222,6 +217,8 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 			if pos > 0 {
 				aName = ast.NewIdent(name)
 			}
+
+			imp.Ident.Name = name
 
 			imps[imp.Path()] = &ast.ImportSpec{
 				Name: aName,
@@ -303,7 +300,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 	namedType, isNamed := typ.(*types.Named)
 	if isNamed && namedType.Obj().Exported() && !isInternal(namedType.Obj().Pkg().Path()) {
 		return &ast.SelectorExpr{
-			X:   ast.NewIdent(namedType.Obj().Pkg().Name()),
+			X:   b.packageName(namedType.Obj().Pkg()),
 			Sel: ast.NewIdent(namedType.Obj().Name()),
 		}
 	}
@@ -388,6 +385,16 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 	return nil
 }
 
+func (b *builder) packageName(pkg *types.Package) *ast.Ident {
+	name, ok := b.imports[pkg.Path()]
+	if !ok {
+		name = &packageName{pkg, ast.NewIdent("")}
+		b.imports[pkg.Path()] = name
+	}
+
+	return name.Ident
+}
+
 func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
 	f, ok := found[typ]
 	if ok {
@@ -457,7 +464,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 						Names: []*ast.Ident{ast.NewIdent("x")},
 						Type: &ast.StarExpr{
 							X: &ast.SelectorExpr{
-								X:   ast.NewIdent(named.Pkg().Name()),
+								X:   b.packageName(named.Pkg()),
 								Sel: ast.NewIdent(named.Name()),
 							},
 						},
