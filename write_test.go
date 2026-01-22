@@ -178,6 +178,7 @@ func TestFieldToType(t *testing.T) {
 			b   builder
 		)
 
+		b.init()
 		format.Node(&buf, token.NewFileSet(), b.fieldToType(test.typ))
 
 		if str := buf.String(); str != test.res {
