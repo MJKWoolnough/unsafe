@@ -296,6 +296,7 @@ func TestBuildFunc(t *testing.T) {
 	}
 
 	imps := gotypes.Imports(b.pkg)
+	b.init()
 
 	for n, test := range [...]struct {
 		typ, res string
@@ -309,6 +310,8 @@ func TestBuildFunc(t *testing.T) {
 		if err != nil {
 			t.Errorf("test %d: unexpected error: %s", n+1, err)
 		} else {
+			b.genImports()
+
 			format.Node(&buf, token.NewFileSet(), b.buildFunc(str))
 
 			if str := buf.String(); str != test.res {
