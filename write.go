@@ -211,16 +211,14 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 				name = oname + strconv.Itoa(pos)
 			}
 
-			names[name] = struct{}{}
-
 			var aName *ast.Ident
 
 			if pos > 0 {
 				aName = ast.NewIdent(name)
 			}
 
+			names[name] = struct{}{}
 			imp.Ident.Name = name
-
 			imps[imp.Path()] = &ast.ImportSpec{
 				Name: aName,
 				Path: &ast.BasicLit{
