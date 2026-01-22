@@ -60,7 +60,7 @@ func TestGenImports(t *testing.T) {
 					},
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
-							ValuePos: 1,
+							ValuePos: 3,
 							Kind:     token.STRING,
 							Value:    `"vimagination.zapto.org/httpreaderat"`,
 						},
@@ -93,7 +93,7 @@ func TestGenImports(t *testing.T) {
 					},
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
-							ValuePos: 1,
+							ValuePos: 3,
 							Kind:     token.STRING,
 							Value:    `"vimagination.zapto.org/cache"`,
 						},
@@ -114,6 +114,7 @@ func TestGenImports(t *testing.T) {
 		}
 
 		imps := gotypes.Imports(b.pkg)
+		b.init()
 
 		for _, imp := range test.imports {
 			b.packageName(imps[imp])
