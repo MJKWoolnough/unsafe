@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"golang.org/x/mod/module"
 	"vimagination.zapto.org/gotypes"
 )
 
@@ -115,7 +116,7 @@ func TestGenImports(t *testing.T) {
 		imps := gotypes.Imports(b.pkg)
 
 		for _, imp := range test.imports {
-			b.imports[imp] = imps[imp]
+			b.packageName(imps[imp])
 		}
 
 		if imp := b.genImports(); !reflect.DeepEqual(imp, test.expected) {
@@ -330,13 +331,22 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\ntype a struct { b }\ntype b interface {C() b}", "type a struct {\n\tb a_b\n}"},
 		{"package a\n\nimport \"sync\"\n\ntype a = sync.Mutex", "type a struct {\n\t_ struct {\n\t}\n\tmu struct {\n\t\tstate int32\n\t\tsema  uint32\n\t}\n}"},
 	} {
-		var buf strings.Builder
+		var (
+			buf strings.Builder
+			b   builder
+		)
 
 		self := parseType(t, test.input)
+		imps := gotypes.Imports(self.(interface{ Obj() *types.TypeName }).Obj().Pkg())
 
-		var b builder
+		b.init()
+		b.mod = &gotypes.ModFile{Imports: map[string]module.Version{}}
+		b.getStruct(imps, "a")
 
-		format.Node(&buf, token.NewFileSet(), b.conStruct("a", self.Underlying().(*types.Struct)))
+		str := b.conStruct("a", self.Underlying().(*types.Struct))
+
+		b.genImports()
+		format.Node(&buf, token.NewFileSet(), str)
 
 		if str := buf.String(); str != test.output {
 			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
