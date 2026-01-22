@@ -391,6 +391,8 @@ func makestrings_Reader(x *strings.Reader) *strings_Reader {
 import (
 	"go/token"
 	"go/types"
+	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
