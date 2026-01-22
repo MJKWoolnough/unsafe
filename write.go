@@ -173,15 +173,12 @@ func isInternal(path string) bool {
 
 func (b *builder) genImports() *ast.GenDecl {
 	names := map[string]struct{}{}
-
 	specs := b.processImports(names, false)
 	stdlib := len(specs)
 	specs = append(specs, b.processImports(names, true)...)
 
 	if len(specs) > stdlib {
-		imp := specs[stdlib].(*ast.ImportSpec)
-
-		if imp.Name != nil {
+		if specs[stdlib].(*ast.ImportSpec).Name != nil {
 			specs[stdlib].(*ast.ImportSpec).Name.NamePos = b.newLine()
 		} else {
 			specs[stdlib].(*ast.ImportSpec).Path.ValuePos = b.newLine()
