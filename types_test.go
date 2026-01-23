@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -199,6 +203,68 @@ func TestConStruct(t *testing.T) {
 		)
 
 		self := parseType(t, test.input)
+		imps := gotypes.Imports(self.(interface{ Obj() *types.TypeName }).Obj().Pkg())
+
+		b.init()
+		b.mod = &gotypes.ModFile{Imports: map[string]module.Version{}}
+		b.getStruct(imps, "a")
+
+		str := b.conStruct("a", self.Underlying().(*types.Struct))
+
+		b.genImports()
+		format.Node(&buf, token.NewFileSet(), str)
+
+		if str := buf.String(); str != test.output {
+			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
+		}
+	}
+}
+
+func parseTypeFromImport(t *testing.T, imp module.Version, typeName string) types.Type {
+	t.Helper()
+
+	var gomod, file bytes.Buffer
+
+	fmt.Fprintf(&gomod, "module a\n\ngo 1.25.5\n\nrequire %s %s", imp.Path, imp.Version)
+	fmt.Fprintf(&file, "package a\n\nimport b %q\ntype c = b.%s", imp.Path, typeName)
+
+	tmp := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(tmp, "go.mod"), gomod.Bytes(), 0600)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	err = os.WriteFile(filepath.Join(tmp, "a.go"), file.Bytes(), 0600)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	pkg, err := gotypes.ParsePackage(tmp)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	return pkg.Scope().Lookup("c").Type()
+}
+
+func TestConStructFromImport(t *testing.T) {
+	for n, test := range [...]struct {
+		imp              module.Version
+		typename, output string
+	}{
+		{
+			module.Version{Path: "vimagination.zapto.org/memfs", Version: "v1.1.1"},
+			"FS",
+			"type a struct {\n\tmu   sync.RWMutex\n\tfsRO struct {\n\t\tde vimagination_zapto_org_memfs_directoryEntry\n\t}\n}",
+		},
+	} {
+		var (
+			buf strings.Builder
+			b   builder
+		)
+
+		self := parseTypeFromImport(t, test.imp, test.typename)
 		imps := gotypes.Imports(self.(interface{ Obj() *types.TypeName }).Obj().Pkg())
 
 		b.init()
