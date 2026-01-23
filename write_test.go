@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"golang.org/x/mod/module"
 )
 
 func TestWriteType(t *testing.T) {
@@ -111,6 +113,84 @@ func makevimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimag
 		var buf strings.Builder
 
 		if err := b.WriteType(&buf, "e", test.typeName...); err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if str := buf.String(); str != test.output {
+			t.Errorf("test %d: expecting output:\n%s\n\ngot:\n%s", n+1, test.output, str)
+		}
+	}
+}
+
+func TestWriteTypeFromImport(t *testing.T) {
+	for n, test := range [...]struct {
+		imp      module.Version
+		typeName string
+		output   string
+	}{
+		{
+			module.Version{Path: "vimagination.zapto.org/memfs", Version: "v1.1.1"},
+			"vimagination.zapto.org/memfs.FS",
+			`package e
+
+import (
+	"io/fs"
+	"sync"
+	"time"
+	"unsafe"
+
+	"vimagination.zapto.org/memfs"
+)
+
+type vimagination_zapto_org_memfs_FS struct {
+	mu   sync.RWMutex
+	fsRO struct {
+		de vimagination_zapto_org_memfs_directoryEntry
+	}
+}
+type vimagination_zapto_org_memfs_dirEnt struct {
+	directoryEntry vimagination_zapto_org_memfs_directoryEntry
+	name           string
+}
+type vimagination_zapto_org_memfs_directoryEntry interface {
+	IsDir() bool
+	ModTime() time.Time
+	Mode() fs.FileMode
+	Size() int64
+	Type() fs.FileMode
+	bytes() ([]byte, interface {
+		Error() string
+	})
+	getEntry(string) (*vimagination_zapto_org_memfs_dirEnt, interface {
+		Error() string
+	})
+	open(name string, mode uint8) (fs.File, interface {
+		Error() string
+	})
+	seal() vimagination_zapto_org_memfs_directoryEntry
+	setMode(fs.FileMode)
+	setTimes(time.Time, time.Time)
+	string() (string, interface {
+		Error() string
+	})
+}
+
+func makevimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_memfs_FS {
+	return (*vimagination_zapto_org_memfs_FS)(unsafe.Pointer(x))
+}
+`,
+		},
+	} {
+		last := strings.LastIndexByte(test.typeName, '.')
+
+		b, err := newBuilder(buildPackage(t, test.imp, test.typeName[last+1:]))
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		var buf strings.Builder
+
+		if err := b.WriteType(&buf, "e", test.typeName); err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
