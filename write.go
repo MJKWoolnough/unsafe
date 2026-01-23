@@ -113,6 +113,20 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 			if slices.Contains(typeNames, name) {
 				b.methods = append(b.methods, b.buildFunc(t.typ))
 			}
+		case *types.Interface:
+			if _, ok := b.structs[name]; ok {
+				continue
+			}
+
+			b.structs[name] = &ast.GenDecl{
+				Tok: token.TYPE,
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: ast.NewIdent(typeName(name)),
+						Type: b.fieldToType(t.typ.Underlying()),
+					},
+				},
+			}
 		}
 	}
 
