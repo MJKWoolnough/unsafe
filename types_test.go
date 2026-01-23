@@ -220,7 +220,7 @@ func TestConStruct(t *testing.T) {
 	}
 }
 
-func parseTypeFromImport(t *testing.T, imp module.Version, typeName string) types.Type {
+func buildPackage(t *testing.T, imp module.Version, typeName string) string {
 	t.Helper()
 
 	var gomod, file bytes.Buffer
@@ -239,6 +239,14 @@ func parseTypeFromImport(t *testing.T, imp module.Version, typeName string) type
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
+
+	return tmp
+}
+
+func parseTypeFromImport(t *testing.T, imp module.Version, typeName string) types.Type {
+	t.Helper()
+
+	tmp := buildPackage(t, imp, typeName)
 
 	pkg, err := gotypes.ParsePackage(tmp)
 	if err != nil {
