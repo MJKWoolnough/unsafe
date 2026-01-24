@@ -27,7 +27,7 @@ type strings_Reader struct {
 	prevRune int
 }
 
-func makestrings_Reader(x *strings.Reader) *strings_Reader {
+func make_strings_Reader(x *strings.Reader) *strings_Reader {
 	return (*strings_Reader)(unsafe.Pointer(x))
 }
 `,
@@ -75,10 +75,10 @@ type go_types_Package struct {
 	goVersion string
 }
 
-func makego_types_Package(x *types.Package) *go_types_Package {
+func make_go_types_Package(x *types.Package) *go_types_Package {
 	return (*go_types_Package)(unsafe.Pointer(x))
 }
-func makego_token_FileSet(x *token.FileSet) *go_token_FileSet {
+func make_go_token_FileSet(x *token.FileSet) *go_token_FileSet {
 	return (*go_token_FileSet)(unsafe.Pointer(x))
 }
 `,
@@ -99,7 +99,7 @@ type vimagination_zapto_org_httpreaderat_block struct {
 	next *vimagination_zapto_org_httpreaderat_block
 }
 
-func makevimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimagination_zapto_org_httpreaderat_block {
+func make_vimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimagination_zapto_org_httpreaderat_block {
 	return (*vimagination_zapto_org_httpreaderat_block)(unsafe.Pointer(x))
 }
 `,
@@ -175,7 +175,7 @@ type vimagination_zapto_org_memfs_directoryEntry interface {
 	})
 }
 
-func makevimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_memfs_FS {
+func make_vimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_memfs_FS {
 	return (*vimagination_zapto_org_memfs_FS)(unsafe.Pointer(x))
 }
 `,

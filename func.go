@@ -10,7 +10,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 	tname := typeName(named.Pkg().Path() + "." + named.Name())
 
 	return &ast.FuncDecl{
-		Name: ast.NewIdent("make" + tname),
+		Name: ast.NewIdent("make_" + tname),
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
 				List: []*ast.Field{
