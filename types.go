@@ -49,17 +49,13 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 	return obj.Type(), nil
 }
 
-func (b *builder) conStruct(name string, str *types.Struct) *ast.GenDecl {
+func (b *builder) conStruct(name string, str types.Type) *ast.GenDecl {
 	return &ast.GenDecl{
 		Tok: token.TYPE,
 		Specs: []ast.Spec{
 			&ast.TypeSpec{
 				Name: ast.NewIdent(typeName(name)),
-				Type: &ast.StructType{
-					Fields: &ast.FieldList{
-						List: b.structFieldList(str.Fields),
-					},
-				},
+				Type: b.fieldToType(str.Underlying()),
 			},
 		},
 	}
