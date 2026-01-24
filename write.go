@@ -118,15 +118,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 				continue
 			}
 
-			b.structs[name] = &ast.GenDecl{
-				Tok: token.TYPE,
-				Specs: []ast.Spec{
-					&ast.TypeSpec{
-						Name: ast.NewIdent(typeName(name)),
-						Type: b.fieldToType(t.typ.Underlying()),
-					},
-				},
-			}
+			b.structs[name] = b.conStruct(name, typ)
 		}
 	}
 
