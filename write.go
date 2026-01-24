@@ -102,22 +102,18 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		b.required = b.required[1:]
 		name := t.name
 
+		if _, ok := b.structs[name]; ok {
+			continue
+		}
+
 		switch typ := t.typ.Underlying().(type) {
 		case *types.Struct:
-			if _, ok := b.structs[name]; ok {
-				continue
-			}
-
 			b.structs[name] = b.conStruct(name, typ)
 
 			if slices.Contains(typeNames, name) {
 				b.methods = append(b.methods, b.buildFunc(t.typ))
 			}
 		case *types.Interface:
-			if _, ok := b.structs[name]; ok {
-				continue
-			}
-
 			b.structs[name] = b.conStruct(name, typ)
 		}
 	}
