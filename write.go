@@ -119,6 +119,19 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 
 	return &ast.File{
 		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, sortedValues(b.structs)...), b.methods...),
+		Decls: append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.methods)...),
 	}, nil
+}
+
+func (b *builder) addNewLines(decls []ast.Decl) []ast.Decl {
+	for n := range decls {
+		switch decl := decls[n].(type) {
+		case *ast.GenDecl:
+			decl.TokPos = b.newLine()
+		case *ast.FuncDecl:
+			decl.Type.Func = b.newLine()
+		}
+	}
+
+	return decls
 }

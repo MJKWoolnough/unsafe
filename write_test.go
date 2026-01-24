@@ -52,6 +52,7 @@ type go_token_FileSet struct {
 	}
 	last atomic.Pointer
 }
+
 type go_token_node struct {
 	parent *go_token_node
 	left   *go_token_node
@@ -64,6 +65,7 @@ type go_token_node struct {
 	balance int32
 	height  int32
 }
+
 type go_types_Package struct {
 	path      string
 	name      string
@@ -78,6 +80,7 @@ type go_types_Package struct {
 func make_go_types_Package(x *types.Package) *go_types_Package {
 	return (*go_types_Package)(unsafe.Pointer(x))
 }
+
 func make_go_token_FileSet(x *token.FileSet) *go_token_FileSet {
 	return (*go_token_FileSet)(unsafe.Pointer(x))
 }
@@ -148,10 +151,12 @@ type vimagination_zapto_org_memfs_FS struct {
 		de vimagination_zapto_org_memfs_directoryEntry
 	}
 }
+
 type vimagination_zapto_org_memfs_dirEnt struct {
 	directoryEntry vimagination_zapto_org_memfs_directoryEntry
 	name           string
 }
+
 type vimagination_zapto_org_memfs_directoryEntry interface {
 	IsDir() bool
 	ModTime() time.Time
