@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -242,3 +243,11 @@ func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
 
 	return false
 }
+
+var (
+	ErrNoModuleType = errors.New("module-less type")
+	ErrNoModule     = errors.New("module not imported")
+	ErrNoType       = errors.New("no type found")
+	ErrNotStruct    = errors.New("not a struct type")
+	ErrInternal     = errors.New("cannot process internal type")
+)

@@ -2,7 +2,6 @@
 package main
 
 import (
-	"errors"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -123,11 +122,3 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		Decls: append(append([]ast.Decl{b.genImports()}, sortedValues(b.structs)...), b.methods...),
 	}, nil
 }
-
-var (
-	ErrNoModuleType = errors.New("module-less type")
-	ErrNoModule     = errors.New("module not imported")
-	ErrNoType       = errors.New("no type found")
-	ErrNotStruct    = errors.New("not a struct type")
-	ErrInternal     = errors.New("cannot process internal type")
-)
