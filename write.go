@@ -105,7 +105,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 			continue
 		}
 
-		b.structs[name] = b.conStruct(name, t.typ.Underlying())
+		b.structs[name] = b.conStruct(name, t.typ)
 
 		if slices.Contains(typeNames, name) {
 			b.methods = append(b.methods, b.buildFunc(t.typ))
