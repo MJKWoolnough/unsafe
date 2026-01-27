@@ -143,6 +143,10 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			},
 		}
 	case *types.Interface:
+		if t.NumMethods() == 0 {
+			return ast.NewIdent("any")
+		}
+
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
 			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
 
