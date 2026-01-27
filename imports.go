@@ -43,7 +43,7 @@ func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec
 func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]ast.Spec {
 	imps := map[string]ast.Spec{}
 
-	for _, imp := range b.imports {
+	for _, imp := range sortedValues(b.imports) {
 		if _, isExt := b.mod.Imports[imp.Path()]; isExt == ext {
 			oname := imp.Package.Name()
 			name := oname
