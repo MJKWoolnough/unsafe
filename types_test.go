@@ -197,6 +197,7 @@ func TestConStruct(t *testing.T) {
 		{"package a\n\ntype a struct { b }\ntype b interface {C() b}", "type a struct {\n\tb a_b\n}"},
 		{"package a\n\nimport \"sync\"\n\ntype a = sync.Mutex", "type a struct {\n\t_ struct {\n\t}\n\tmu struct {\n\t\tstate int32\n\t\tsema  uint32\n\t}\n}"},
 		{"package a\n\ntype a struct { err error }", "type a struct {\n\terr error\n}"},
+		{"package a\n\ntype a struct { a any }", "type a struct {\n\ta any\n}"},
 	} {
 		var (
 			buf strings.Builder
