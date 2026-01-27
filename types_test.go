@@ -225,7 +225,12 @@ func buildPackage(t *testing.T, imp module.Version, typeName string) string {
 
 	var gomod, file bytes.Buffer
 
-	fmt.Fprintf(&gomod, "module a\n\ngo 1.25.5\n\nrequire %s %s", imp.Path, imp.Version)
+	if imp.Version == "" {
+		fmt.Fprintf(&gomod, "module a\n\ngo 1.25.5")
+	} else {
+		fmt.Fprintf(&gomod, "module a\n\ngo 1.25.5\n\nrequire %s %s", imp.Path, imp.Version)
+	}
+
 	fmt.Fprintf(&file, "package a\n\nimport b %q\ntype c = b.%s", imp.Path, typeName)
 
 	tmp := t.TempDir()
