@@ -16,9 +16,9 @@ func isInternal(path string) bool {
 
 func (b *builder) genImports() *ast.GenDecl {
 	names := map[string]struct{}{}
-	specs := b.processImports(names, false)
+	specs := b.buildImports(names, false)
 	stdlib := len(specs)
-	specs = append(specs, b.processImports(names, true)...)
+	specs = append(specs, b.buildImports(names, true)...)
 
 	if len(specs) > stdlib {
 		if specs[stdlib].(*ast.ImportSpec).Name != nil {
@@ -34,13 +34,7 @@ func (b *builder) genImports() *ast.GenDecl {
 	}
 }
 
-func (b *builder) processImports(names map[string]struct{}, ext bool) []ast.Spec {
-	imps := b.buildImports(names, ext)
-
-	return sortedValues(imps)
-}
-
-func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]ast.Spec {
+func (b *builder) buildImports(names map[string]struct{}, ext bool) []ast.Spec {
 	imps := map[string]ast.Spec{}
 
 	for _, imp := range sortedValues(b.imports) {
@@ -72,7 +66,7 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 		}
 	}
 
-	return imps
+	return sortedValues(imps)
 }
 
 func has[K comparable, V any](m map[K]V, k K) bool {
