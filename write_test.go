@@ -185,6 +185,87 @@ func make_vimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_m
 }
 `,
 		},
+		{
+			module.Version{Path: "html/template"},
+			"html/template.Template",
+			`package e
+
+import (
+	"html/template"
+	"sync"
+	template1 "text/template"
+	"text/template/parse"
+	"unsafe"
+)
+
+type html_template_Template struct {
+	escapeErr interface {
+		Error() string
+	}
+	text      *template1.Template
+	Tree      *parse.Tree
+	nameSpace *html_template_nameSpace
+}
+
+type html_template_escaper struct {
+	ns     *html_template_nameSpace
+	output map[string]struct {
+		state        uint8
+		delim        uint8
+		urlPart      uint8
+		jsCtx        uint8
+		jsBraceDepth []int
+		attr         uint8
+		element      uint8
+		n            parse.Node
+		err          *template.Error
+	}
+	derived           map[string]*template1.Template
+	called            map[string]bool
+	actionNodeEdits   map[*parse.ActionNode][]string
+	templateNodeEdits map[*parse.TemplateNode]string
+	textNodeEdits     map[*parse.TextNode][]byte
+	rangeContext      *html_template_rangeContext
+}
+
+type html_template_nameSpace struct {
+	mu      sync.Mutex
+	set     map[string]*template.Template
+	escaped bool
+	esc     html_template_escaper
+}
+
+type html_template_rangeContext struct {
+	outer  *html_template_rangeContext
+	breaks []struct {
+		state        uint8
+		delim        uint8
+		urlPart      uint8
+		jsCtx        uint8
+		jsBraceDepth []int
+		attr         uint8
+		element      uint8
+		n            parse.Node
+		err          *template.Error
+	}
+	continues []struct {
+		state        uint8
+		delim        uint8
+		urlPart      uint8
+		jsCtx        uint8
+		jsBraceDepth []int
+		attr         uint8
+		element      uint8
+		n            parse.Node
+		err          *template.Error
+	}
+}
+
+func make_html_template_Template(x *template.Template) *html_template_Template {
+	return (*html_template_Template)(unsafe.Pointer(x))
+}
+`,
+		},
 	} {
 		last := strings.LastIndexByte(test.typeName, '.')
 
