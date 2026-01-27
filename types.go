@@ -96,6 +96,8 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			X:   b.packageName(namedType.Obj().Pkg()),
 			Sel: ast.NewIdent(namedType.Obj().Name()),
 		}
+	} else if isNamed && namedType.Obj().Pkg() == nil {
+		return ast.NewIdent(namedType.Obj().Name())
 	}
 
 	switch t := typ.Underlying().(type) {

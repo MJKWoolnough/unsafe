@@ -163,21 +163,13 @@ type vimagination_zapto_org_memfs_directoryEntry interface {
 	Mode() fs.FileMode
 	Size() int64
 	Type() fs.FileMode
-	bytes() ([]byte, interface {
-		Error() string
-	})
-	getEntry(string) (*vimagination_zapto_org_memfs_dirEnt, interface {
-		Error() string
-	})
-	open(name string, mode uint8) (fs.File, interface {
-		Error() string
-	})
+	bytes() ([]byte, error)
+	getEntry(string) (*vimagination_zapto_org_memfs_dirEnt, error)
+	open(name string, mode uint8) (fs.File, error)
 	seal() vimagination_zapto_org_memfs_directoryEntry
 	setMode(fs.FileMode)
 	setTimes(time.Time, time.Time)
-	string() (string, interface {
-		Error() string
-	})
+	string() (string, error)
 }
 
 func make_vimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_memfs_FS {
@@ -199,9 +191,7 @@ import (
 )
 
 type html_template_Template struct {
-	escapeErr interface {
-		Error() string
-	}
+	escapeErr error
 	text      *template1.Template
 	Tree      *parse.Tree
 	nameSpace *html_template_nameSpace
