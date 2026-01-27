@@ -49,7 +49,7 @@ func (b *builder) buildImports(names map[string]struct{}, ext bool) map[string]a
 			name := oname
 			pos := 0
 
-			for has(names, oname) {
+			for has(names, name) {
 				pos++
 				name = oname + strconv.Itoa(pos)
 			}
