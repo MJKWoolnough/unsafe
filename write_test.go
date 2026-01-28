@@ -50,7 +50,7 @@ type go_token_FileSet struct {
 	tree  struct {
 		root *go_token_node
 	}
-	last atomic.Pointer
+	last atomic.Pointer[token.File]
 }
 
 type go_token_node struct {
