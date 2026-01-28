@@ -107,6 +107,49 @@ func make_vimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vima
 }
 `,
 		},
+		{
+			[]string{"vimagination.zapto.org/cache.LRU"},
+			`package e
+
+import (
+	"sync"
+	"unsafe"
+
+	"vimagination.zapto.org/cache"
+)
+
+type vimagination_zapto_org_cache_LRU[T comparable, U any] struct {
+	cache vimagination_zapto_org_cache_cache[T, U, vimagination_zapto_org_cache_lru[T, U]]
+}
+
+type vimagination_zapto_org_cache_cache[T comparable, U any, V vimagination_zapto_org_cache_ru[T, U]] struct {
+	mu       sync.Mutex
+	maxItems uint64
+	data     map[T]*vimagination_zapto_org_cache_item[T, U]
+	first    *vimagination_zapto_org_cache_item[T, U]
+	last     *vimagination_zapto_org_cache_item[T, U]
+	remover  vimagination_zapto_org_cache_lru[T, U]
+}
+
+type vimagination_zapto_org_cache_item[T comparable, U any] struct {
+	key  T
+	data U
+	prev *vimagination_zapto_org_cache_item[T, U]
+	next *vimagination_zapto_org_cache_item[T, U]
+}
+
+type vimagination_zapto_org_cache_lru[T comparable, U any] struct {
+}
+
+type vimagination_zapto_org_cache_ru[T comparable, U any] interface {
+	Remove(first **vimagination_zapto_org_cache_item[T, U], last **vimagination_zapto_org_cache_item[T, U]) *vimagination_zapto_org_cache_item[T, U]
+}
+
+func make_vimagination_zapto_org_cache_LRU(x *cache.LRU) *vimagination_zapto_org_cache_LRU {
+	return (*vimagination_zapto_org_cache_LRU)(unsafe.Pointer(x))
+}
+`,
+		},
 	} {
 		b, err := newBuilder(".")
 		if err != nil {
