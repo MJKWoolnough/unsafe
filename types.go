@@ -112,6 +112,11 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 	return fields
 }
 
+func (b *builder) requiredTypeName(namedType *types.Named) ast.Expr {
+	b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
+	return newTypeName(namedType.Obj())
+}
+
 func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Expr {
 	switch namedType := typ.(type) {
 	case *types.Named:
@@ -128,8 +133,7 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 
 		if namedType.TypeParams() != nil {
 			if name == nil {
-				b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
-				name = newTypeName(namedType.Obj())
+				name = b.requiredTypeName(namedType)
 			}
 
 			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
@@ -172,10 +176,7 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 		}
 	case *types.Struct:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			namedType := typ.(*types.Named)
-			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
-
-			return newTypeName(namedType.Obj())
+			return b.requiredTypeName(typ.(*types.Named))
 		}
 
 		return &ast.StructType{
@@ -198,9 +199,7 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 		}
 
 		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || isTypeRecursive(typ, map[types.Type]bool{})) {
-			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
-
-			return newTypeName(namedType.Obj())
+			return b.requiredTypeName(typ.(*types.Named))
 		}
 
 		var fields []*ast.Field
