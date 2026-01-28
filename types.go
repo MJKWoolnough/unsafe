@@ -106,24 +106,16 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 		var typ ast.Expr
 
 		if namedType, isNamed := field.Type().(*types.Named); isNamed && namedType.TypeArgs() != nil {
-			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
+			typ = b.fieldToType(namedType, params)
 
 			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
 
 			for param := range namedType.TypeArgs().Types() {
-				var name *ast.Ident
-
-				switch t := param.(type) {
-				case *types.Named:
-					name = newTypeName(t.Obj())
-				case *types.TypeParam:
-					name = ast.NewIdent(t.Obj().Name())
-				}
-
-				indicies = append(indicies, name)
+				indicies = append(indicies, b.fieldToType(param, params))
 			}
+
 			typ = &ast.IndexListExpr{
-				X:       newTypeName(namedType.Obj()),
+				X:       typ,
 				Indices: indicies,
 			}
 
