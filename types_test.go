@@ -72,7 +72,7 @@ func TestFieldToType(t *testing.T) {
 		)
 
 		b.init()
-		format.Node(&buf, token.NewFileSet(), b.fieldToType(test.typ))
+		format.Node(&buf, token.NewFileSet(), b.fieldToType(test.typ, nil))
 
 		if str := buf.String(); str != test.res {
 			t.Errorf("test %d: expecting type %q, got %q", n+1, test.res, str)
