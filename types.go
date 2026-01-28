@@ -103,9 +103,37 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 			name = []*ast.Ident{ast.NewIdent(field.Name())}
 		}
 
+		var typ ast.Expr
+
+		if namedType, isNamed := field.Type().(*types.Named); isNamed && namedType.TypeArgs() != nil {
+			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
+
+			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
+
+			for param := range namedType.TypeArgs().Types() {
+				var name *ast.Ident
+
+				switch t := param.(type) {
+				case *types.Named:
+					name = newTypeName(t.Obj())
+				case *types.TypeParam:
+					name = ast.NewIdent(t.Obj().Name())
+				}
+
+				indicies = append(indicies, name)
+			}
+			typ = &ast.IndexListExpr{
+				X:       newTypeName(namedType.Obj()),
+				Indices: indicies,
+			}
+
+		} else {
+			typ = b.fieldToType(field.Type(), params)
+		}
+
 		fields = append(fields, &ast.Field{
 			Names: name,
-			Type:  b.fieldToType(field.Type(), params),
+			Type:  typ,
 		})
 	}
 
@@ -175,8 +203,7 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 			return ast.NewIdent("any")
 		}
 
-		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			namedType := typ.(*types.Named)
+		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || isTypeRecursive(typ, map[types.Type]bool{})) {
 			b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
 
 			return newTypeName(namedType.Obj())
