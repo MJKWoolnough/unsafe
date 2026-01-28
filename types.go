@@ -103,29 +103,9 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 			name = []*ast.Ident{ast.NewIdent(field.Name())}
 		}
 
-		var typ ast.Expr
-
-		if namedType, isNamed := field.Type().(*types.Named); isNamed && namedType.TypeArgs() != nil {
-			typ = b.fieldToType(namedType, params)
-
-			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
-
-			for param := range namedType.TypeArgs().Types() {
-				indicies = append(indicies, b.fieldToType(param, params))
-			}
-
-			typ = &ast.IndexListExpr{
-				X:       typ,
-				Indices: indicies,
-			}
-
-		} else {
-			typ = b.fieldToType(field.Type(), params)
-		}
-
 		fields = append(fields, &ast.Field{
 			Names: name,
-			Type:  typ,
+			Type:  b.fieldToType(field.Type(), params),
 		})
 	}
 
@@ -136,10 +116,25 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 	switch namedType := typ.(type) {
 	case *types.Named:
 		if namedType.Obj().Exported() && !isInternal(namedType.Obj().Pkg().Path()) {
-			return &ast.SelectorExpr{
+			var name ast.Expr = &ast.SelectorExpr{
 				X:   b.packageName(namedType.Obj().Pkg()),
 				Sel: ast.NewIdent(namedType.Obj().Name()),
 			}
+
+			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
+
+			for param := range namedType.TypeArgs().Types() {
+				indicies = append(indicies, b.fieldToType(param, params))
+			}
+
+			if namedType.TypeParams() != nil {
+				name = &ast.IndexListExpr{
+					X:       name,
+					Indices: indicies,
+				}
+			}
+
+			return name
 		} else if namedType.Obj().Pkg() == nil {
 			return ast.NewIdent(namedType.Obj().Name())
 		}
