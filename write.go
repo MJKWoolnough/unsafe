@@ -37,11 +37,12 @@ type builder struct {
 	structs  map[string]ast.Decl
 	required []named
 	methods  []ast.Decl
+	args     []string
 	pkg      *types.Package
 	pos
 }
 
-func newBuilder(module string) (*builder, error) {
+func newBuilder(module string, args ...string) (*builder, error) {
 	pkg, err := gotypes.ParsePackage(module)
 	if err != nil {
 		return nil, err
@@ -53,8 +54,9 @@ func newBuilder(module string) (*builder, error) {
 	}
 
 	return &builder{
-		mod: mod,
-		pkg: pkg,
+		mod:  mod,
+		pkg:  pkg,
+		args: args,
 	}, nil
 }
 
@@ -113,6 +115,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 	}
 
 	return &ast.File{
+		Doc:   &ast.CommentGroup{},
 		Name:  ast.NewIdent(packageName),
 		Decls: append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.methods)...),
 	}, nil
