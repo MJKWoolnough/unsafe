@@ -6,21 +6,53 @@ import (
 )
 
 func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
-	named := typ.(*types.Named).Obj()
-	tname := typeName(named.Pkg().Path() + "." + named.Name())
+	namedType := typ.(*types.Named)
+	obj := namedType.Obj()
+
+	tname := typeName(obj.Pkg().Path() + "." + obj.Name())
+
+	var (
+		oname ast.Expr = &ast.SelectorExpr{
+			X:   b.packageName(obj.Pkg()),
+			Sel: ast.NewIdent(obj.Name()),
+		}
+		nname ast.Expr = ast.NewIdent(tname)
+
+		paramList *ast.FieldList
+	)
+
+	if namedType.TypeParams() != nil {
+		paramList = new(ast.FieldList)
+		indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
+
+		for param := range namedType.TypeParams().TypeParams() {
+			paramList.List = append(paramList.List, &ast.Field{
+				Names: []*ast.Ident{ast.NewIdent(param.Obj().Name())},
+				Type:  b.fieldToType(param.Constraint(), map[string]struct{}{}),
+			})
+			indicies = append(indicies, b.fieldToType(param, nil))
+		}
+
+		oname = &ast.IndexListExpr{
+			X:       oname,
+			Indices: indicies,
+		}
+		nname = &ast.IndexListExpr{
+			X:       nname,
+			Indices: indicies,
+		}
+	}
 
 	return &ast.FuncDecl{
 		Name: ast.NewIdent("make_" + tname),
 		Type: &ast.FuncType{
+			TypeParams: paramList,
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					{
 						Names: []*ast.Ident{ast.NewIdent("x")},
 						Type: &ast.StarExpr{
-							X: &ast.SelectorExpr{
-								X:   b.packageName(named.Pkg()),
-								Sel: ast.NewIdent(named.Name()),
-							},
+							X: oname,
 						},
 					},
 				},
@@ -29,7 +61,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 				List: []*ast.Field{
 					{
 						Type: &ast.StarExpr{
-							X: ast.NewIdent(tname),
+							X: nname,
 						},
 					},
 				},
@@ -42,7 +74,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 						&ast.CallExpr{
 							Fun: &ast.ParenExpr{
 								X: &ast.StarExpr{
-									X: ast.NewIdent(tname),
+									X: nname,
 								},
 							},
 							Args: []ast.Expr{
