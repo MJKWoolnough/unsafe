@@ -14,15 +14,25 @@ func main() {
 }
 
 func run() error {
-	var module, output, packageName string
+	var (
+		module, output, packageName string
+		excludeComment              bool
+	)
 
 	flag.StringVar(&module, "-m", "", "path to module")
 	flag.StringVar(&output, "-o", "", "output file")
 	flag.StringVar(&packageName, "-p", "", "package name")
+	flag.BoolVar(&excludeComment, "-x", false, "don't include go:generate comment")
 
 	flag.Parse()
 
-	b, err := newBuilder(module)
+	var args []string
+
+	if !excludeComment {
+		args = os.Args[1:]
+	}
+
+	b, err := newBuilder(module, args...)
 	if err != nil {
 		return err
 	}
