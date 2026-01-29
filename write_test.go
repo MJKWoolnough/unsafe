@@ -177,7 +177,9 @@ func TestWriteTypeFromImport(t *testing.T) {
 		{
 			module.Version{Path: "vimagination.zapto.org/memfs", Version: "v1.1.1"},
 			"vimagination.zapto.org/memfs.FS",
-			`package e
+			`//go:generate go run vimagination.zapto.org/unsafe@latest -o file.go -p e
+
+package e
 
 import (
 	"io/fs"
@@ -223,7 +225,9 @@ func make_vimagination_zapto_org_memfs_FS(x *memfs.FS) *vimagination_zapto_org_m
 		{
 			module.Version{Path: "html/template"},
 			"html/template.Template",
-			`package e
+			`//go:generate go run vimagination.zapto.org/unsafe@latest -o file.go -p e
+
+package e
 
 import (
 	"html/template"
@@ -302,7 +306,7 @@ func make_html_template_Template(x *template.Template) *html_template_Template {
 	} {
 		last := strings.LastIndexByte(test.typeName, '.')
 
-		b, err := newBuilder(buildPackage(t, test.imp, test.typeName[last+1:]))
+		b, err := newBuilder(buildPackage(t, test.imp, test.typeName[last+1:]), "-o", "file.go", "-p", "e")
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
