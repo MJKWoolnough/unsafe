@@ -10,6 +10,15 @@ import (
 )
 
 func TestGenImports(t *testing.T) {
+	doc := &ast.CommentGroup{
+		List: []*ast.Comment{
+			{
+				Slash: 3,
+				Text:  "// THIS FILE IS GENERATED AUTOMATICALLY; DO NOT EDIT",
+			},
+		},
+	}
+
 	for n, test := range [...]struct {
 		imports  []string
 		expected *ast.GenDecl
@@ -17,7 +26,9 @@ func TestGenImports(t *testing.T) {
 		{
 			[]string{"strings"},
 			&ast.GenDecl{
-				Tok: token.IMPORT,
+				Doc:    doc,
+				Tok:    token.IMPORT,
+				TokPos: 5,
 				Specs: []ast.Spec{
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
@@ -37,7 +48,9 @@ func TestGenImports(t *testing.T) {
 		{
 			[]string{"strings", "vimagination.zapto.org/httpreaderat"},
 			&ast.GenDecl{
-				Tok: token.IMPORT,
+				Doc:    doc,
+				Tok:    token.IMPORT,
+				TokPos: 5,
 				Specs: []ast.Spec{
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
@@ -53,7 +66,7 @@ func TestGenImports(t *testing.T) {
 					},
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
-							ValuePos: 3,
+							ValuePos: 7,
 							Kind:     token.STRING,
 							Value:    `"vimagination.zapto.org/httpreaderat"`,
 						},
@@ -64,7 +77,9 @@ func TestGenImports(t *testing.T) {
 		{
 			[]string{"strings", "vimagination.zapto.org/httpreaderat", "vimagination.zapto.org/cache", "io"},
 			&ast.GenDecl{
-				Tok: token.IMPORT,
+				Doc:    doc,
+				Tok:    token.IMPORT,
+				TokPos: 5,
 				Specs: []ast.Spec{
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
@@ -86,7 +101,7 @@ func TestGenImports(t *testing.T) {
 					},
 					&ast.ImportSpec{
 						Path: &ast.BasicLit{
-							ValuePos: 3,
+							ValuePos: 7,
 							Kind:     token.STRING,
 							Value:    `"vimagination.zapto.org/cache"`,
 						},
