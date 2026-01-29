@@ -145,8 +145,8 @@ type vimagination_zapto_org_cache_ru[T comparable, U any] interface {
 	Remove(first **vimagination_zapto_org_cache_item[T, U], last **vimagination_zapto_org_cache_item[T, U]) *vimagination_zapto_org_cache_item[T, U]
 }
 
-func make_vimagination_zapto_org_cache_LRU(x *cache.LRU) *vimagination_zapto_org_cache_LRU {
-	return (*vimagination_zapto_org_cache_LRU)(unsafe.Pointer(x))
+func make_vimagination_zapto_org_cache_LRU[T comparable, U any](x *cache.LRU[T, U]) *vimagination_zapto_org_cache_LRU[T, U] {
+	return (*vimagination_zapto_org_cache_LRU[T, U])(unsafe.Pointer(x))
 }
 `,
 		},
