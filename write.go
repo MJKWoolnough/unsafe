@@ -8,6 +8,8 @@ import (
 	"go/types"
 	"io"
 	"slices"
+	"strconv"
+	"strings"
 
 	"vimagination.zapto.org/gotypes"
 )
@@ -114,11 +116,43 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		}
 	}
 
+	var doc *ast.CommentGroup
+
+	if len(b.args) > 0 {
+		doc = &ast.CommentGroup{
+			List: []*ast.Comment{
+				{
+					Slash: b.newLine(),
+					Text:  "//go:generate go run vimagination.zapto.org/unsafe@latest " + encodeOpts(b.args),
+				},
+			},
+		}
+	}
+
 	return &ast.File{
-		Doc:   &ast.CommentGroup{},
-		Name:  ast.NewIdent(packageName),
-		Decls: append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.methods)...),
+		Doc:     doc,
+		Package: b.newLine(),
+		Name:    ast.NewIdent(packageName),
+		Decls:   append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.methods)...),
 	}, nil
+}
+
+func encodeOpts(opts []string) string {
+	var buf []byte
+
+	for n, opt := range opts {
+		if n > 0 {
+			buf = append(buf, ' ')
+		}
+
+		if strings.Contains(opt, " ") {
+			buf = strconv.AppendQuote(buf, opt)
+		} else {
+			buf = append(buf, opt...)
+		}
+	}
+
+	return string(buf)
 }
 
 func (b *builder) addNewLines(decls []ast.Decl) []ast.Decl {
