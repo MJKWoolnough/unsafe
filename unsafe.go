@@ -23,6 +23,9 @@ func run() error {
 	flag.Parse()
 
 	b, err := newBuilder(module)
+	if err != nil {
+		return err
+	}
 
 	f, err := os.Create(output)
 	if err != nil {
