@@ -12,16 +12,7 @@ import (
 )
 
 func (b *builder) getStruct(imps map[string]*types.Package, typename string) (types.Type, error) {
-	genPos := strings.IndexByte(typename, '[')
-	if genPos == -1 {
-		genPos = len(typename)
-	}
-
-	if _, ok := b.structs[typename[:genPos]]; ok {
-		return nil, nil
-	}
-
-	pos := strings.LastIndexByte(typename[:genPos], '.')
+	pos := strings.LastIndexByte(typename, '.')
 	if pos < 0 {
 		return nil, fmt.Errorf("%w: %s", ErrNoModuleType, typename)
 	}
@@ -35,7 +26,7 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 		return nil, fmt.Errorf("%w: %s", ErrNoModule, typename)
 	}
 
-	obj := pkg.Scope().Lookup(typename[pos+1 : genPos])
+	obj := pkg.Scope().Lookup(typename[pos+1:])
 	if obj == nil {
 		return nil, fmt.Errorf("%w: %s", ErrNoType, typename)
 	}
