@@ -19,10 +19,10 @@ func run() error {
 		excludeComment              bool
 	)
 
-	flag.StringVar(&module, "-m", "", "path to module")
-	flag.StringVar(&output, "-o", "", "output file")
-	flag.StringVar(&packageName, "-p", "", "package name")
-	flag.BoolVar(&excludeComment, "-x", false, "don't include go:generate comment")
+	flag.StringVar(&module, "m", "", "path to module")
+	flag.StringVar(&output, "o", "", "output file")
+	flag.StringVar(&packageName, "p", "", "package name")
+	flag.BoolVar(&excludeComment, "x", false, "don't include go:generate comment")
 
 	flag.Parse()
 
