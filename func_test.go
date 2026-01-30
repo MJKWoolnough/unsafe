@@ -23,6 +23,7 @@ func TestBuildFunc(t *testing.T) {
 	}{
 		{"strings.Reader", "func make_strings_Reader(x *strings.Reader) *strings_Reader {\n\treturn (*strings_Reader)(unsafe.Pointer(x))\n}"},
 		{"vimagination.zapto.org/httpreaderat.block", "func make_vimagination_zapto_org_httpreaderat_block(x *httpreaderat.block) *vimagination_zapto_org_httpreaderat_block {\n\treturn (*vimagination_zapto_org_httpreaderat_block)(unsafe.Pointer(x))\n}"},
+		{"vimagination.zapto.org/cache.LRU", "func make_vimagination_zapto_org_cache_LRU[T comparable, U any](x *cache.LRU[T, U]) *vimagination_zapto_org_cache_LRU[T, U] {\n\treturn (*vimagination_zapto_org_cache_LRU[T, U])(unsafe.Pointer(x))\n}"},
 	} {
 		var buf strings.Builder
 
