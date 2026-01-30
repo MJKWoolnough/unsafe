@@ -97,10 +97,9 @@ func has[K comparable, V any](m map[K]V, k K) bool {
 
 func sortedValues[K cmp.Ordered, V any](m map[K]V) []V {
 	keys := slices.Collect(maps.Keys(m))
+	specs := make([]V, 0, len(keys))
 
 	slices.Sort(keys)
-
-	var specs []V
 
 	for _, key := range keys {
 		specs = append(specs, m[key])
