@@ -14,6 +14,8 @@ import (
 	"vimagination.zapto.org/gotypes"
 )
 
+const generateComment = "//go:generate go run vimagination.zapto.org/unsafe@latest "
+
 type named struct {
 	name string
 	typ  types.Type
@@ -123,7 +125,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 			List: []*ast.Comment{
 				{
 					Slash: b.newLine(),
-					Text:  "//go:generate go run vimagination.zapto.org/unsafe@latest " + encodeOpts(b.args),
+					Text:  generateComment + encodeOpts(b.args),
 				},
 			},
 		}
