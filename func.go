@@ -8,7 +8,6 @@ import (
 func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 	namedType := typ.(*types.Named)
 	obj := namedType.Obj()
-
 	tname := typeName(obj.Pkg().Path() + "." + obj.Name())
 
 	var (
