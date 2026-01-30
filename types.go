@@ -105,6 +105,7 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 
 func (b *builder) requiredTypeName(namedType *types.Named) ast.Expr {
 	b.required = append(b.required, named{namedType.Obj().Pkg().Path() + "." + namedType.Obj().Name(), namedType})
+
 	return newTypeName(namedType.Obj())
 }
 
