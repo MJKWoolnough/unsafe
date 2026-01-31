@@ -27,9 +27,9 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 		for param := range namedType.TypeParams().TypeParams() {
 			paramList.List = append(paramList.List, &ast.Field{
 				Names: []*ast.Ident{ast.NewIdent(param.Obj().Name())},
-				Type:  b.fieldToType(param.Constraint(), map[string]struct{}{}),
+				Type:  b.fieldToType(param.Constraint()),
 			})
-			indicies = append(indicies, b.fieldToType(param, nil))
+			indicies = append(indicies, b.fieldToType(param))
 		}
 
 		oname = &ast.IndexListExpr{

@@ -44,8 +44,6 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 func (b *builder) conStruct(name string, str types.Type) *ast.GenDecl {
 	var paramList *ast.FieldList
 
-	params := make(map[string]struct{})
-
 	switch typ := str.(type) {
 	case *types.Named:
 		if tp := typ.TypeParams(); tp != nil {
@@ -54,10 +52,8 @@ func (b *builder) conStruct(name string, str types.Type) *ast.GenDecl {
 			for t := range tp.TypeParams() {
 				paramList.List = append(paramList.List, &ast.Field{
 					Names: []*ast.Ident{ast.NewIdent(t.Obj().Name())},
-					Type:  b.fieldToType(t.Constraint(), map[string]struct{}{}),
+					Type:  b.fieldToType(t.Constraint()),
 				})
-
-				params[t.Obj().Name()] = struct{}{}
 			}
 		}
 
@@ -70,7 +66,7 @@ func (b *builder) conStruct(name string, str types.Type) *ast.GenDecl {
 			&ast.TypeSpec{
 				Name:       ast.NewIdent(typeName(name)),
 				TypeParams: paramList,
-				Type:       b.fieldToType(str, params),
+				Type:       b.fieldToType(str),
 			},
 		},
 	}
@@ -84,7 +80,7 @@ func newTypeName(name *types.TypeName) *ast.Ident {
 	return ast.NewIdent(typeName(name.Pkg().Path() + "." + name.Name()))
 }
 
-func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params map[string]struct{}) []*ast.Field {
+func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
 	var fields []*ast.Field
 
 	for field := range fieldsFn() {
@@ -96,7 +92,7 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], params m
 
 		fields = append(fields, &ast.Field{
 			Names: name,
-			Type:  b.fieldToType(field.Type(), params),
+			Type:  b.fieldToType(field.Type()),
 		})
 	}
 
@@ -109,31 +105,31 @@ func (b *builder) requiredTypeName(namedType *types.Named) ast.Expr {
 	return newTypeName(namedType.Obj())
 }
 
-func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Expr {
-	if expr := b.handleNamed(typ, params); expr != nil {
+func (b *builder) fieldToType(typ types.Type) ast.Expr {
+	if expr := b.handleNamed(typ); expr != nil {
 		return expr
 	}
 
 	switch t := typ.Underlying().(type) {
 	case *types.Pointer:
 		return &ast.StarExpr{
-			X: b.fieldToType(t.Elem(), params),
+			X: b.fieldToType(t.Elem()),
 		}
 	case *types.Map:
 		return &ast.MapType{
-			Key:   b.fieldToType(t.Key(), params),
-			Value: b.fieldToType(t.Elem(), params),
+			Key:   b.fieldToType(t.Key()),
+			Value: b.fieldToType(t.Elem()),
 		}
 	case *types.Array:
 		return &ast.ArrayType{
 			Len: &ast.BasicLit{
 				Value: strconv.FormatInt(t.Len(), 10),
 			},
-			Elt: b.fieldToType(t.Elem(), params),
+			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Slice:
 		return &ast.ArrayType{
-			Elt: b.fieldToType(t.Elem(), params),
+			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Struct:
 		if isTypeRecursive(typ, map[types.Type]bool{}) {
@@ -142,16 +138,16 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 
 		return &ast.StructType{
 			Fields: &ast.FieldList{
-				List: b.structFieldList(t.Fields, params),
+				List: b.structFieldList(t.Fields),
 			},
 		}
 	case *types.Signature:
 		return &ast.FuncType{
 			Params: &ast.FieldList{
-				List: b.structFieldList(t.Params().Variables, params),
+				List: b.structFieldList(t.Params().Variables),
 			},
 			Results: &ast.FieldList{
-				List: b.structFieldList(t.Results().Variables, params),
+				List: b.structFieldList(t.Results().Variables),
 			},
 		}
 	case *types.Interface:
@@ -167,12 +163,12 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 
 		for f := range t.EmbeddedTypes() {
 			fields = append(fields, &ast.Field{
-				Type: b.fieldToType(f, params),
+				Type: b.fieldToType(f),
 			})
 		}
 
 		for fn := range t.ExplicitMethods() {
-			typ := b.fieldToType(fn.Signature(), params).(*ast.FuncType)
+			typ := b.fieldToType(fn.Signature()).(*ast.FuncType)
 
 			typ.Func = token.NoPos
 
@@ -194,7 +190,7 @@ func (b *builder) fieldToType(typ types.Type, params map[string]struct{}) ast.Ex
 	return nil
 }
 
-func (b *builder) handleNamed(typ types.Type, params map[string]struct{}) ast.Expr {
+func (b *builder) handleNamed(typ types.Type) ast.Expr {
 	switch namedType := typ.(type) {
 	case *types.Named:
 		var name ast.Expr
@@ -216,7 +212,7 @@ func (b *builder) handleNamed(typ types.Type, params map[string]struct{}) ast.Ex
 			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
 
 			for param := range namedType.TypeArgs().Types() {
-				indicies = append(indicies, b.fieldToType(param, params))
+				indicies = append(indicies, b.fieldToType(param))
 			}
 
 			return &ast.IndexListExpr{
