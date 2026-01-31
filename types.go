@@ -155,7 +155,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			return ast.NewIdent("any")
 		}
 
-		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || isTypeRecursive(typ, map[types.Type]bool{})) {
+		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || isTypeRecursive(typ, map[types.Type]bool{}) || interfaceContainsUnexported(t)) {
 			return b.requiredTypeName(typ.(*types.Named))
 		}
 
@@ -188,6 +188,16 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 	}
 
 	return nil
+}
+
+func interfaceContainsUnexported(t *types.Interface) bool {
+	for method := range t.ExplicitMethods() {
+		if !method.Exported() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (b *builder) handleNamed(typ types.Type) ast.Expr {
