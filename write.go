@@ -36,13 +36,13 @@ type packageName struct {
 }
 
 type builder struct {
-	mod      *gotypes.ModFile
-	imports  map[string]*packageName
-	structs  map[string]ast.Decl
-	required []named
-	methods  []ast.Decl
-	args     []string
-	pkg      *types.Package
+	mod       *gotypes.ModFile
+	imports   map[string]*packageName
+	structs   map[string]ast.Decl
+	required  []named
+	functions []ast.Decl
+	args      []string
+	pkg       *types.Package
 	pos
 }
 
@@ -114,7 +114,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		b.structs[name] = b.conStruct(name, t.typ)
 
 		if slices.Contains(typeNames, name) {
-			b.methods = append(b.methods, b.buildFunc(t.typ))
+			b.functions = append(b.functions, b.buildFunc(t.typ))
 		}
 	}
 
@@ -135,7 +135,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		Doc:     doc,
 		Package: b.newLine(),
 		Name:    ast.NewIdent(packageName),
-		Decls:   append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.methods)...),
+		Decls:   append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.functions)...),
 	}, nil
 }
 
