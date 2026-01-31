@@ -36,14 +36,20 @@ type packageName struct {
 }
 
 type builder struct {
-	mod       *gotypes.ModFile
-	imports   map[string]*packageName
-	structs   map[string]ast.Decl
-	required  []named
-	functions []ast.Decl
-	args      []string
-	pkg       *types.Package
+	mod        *gotypes.ModFile
+	imports    map[string]*packageName
+	structs    map[string]ast.Decl
+	implements map[string]interfaceType
+	required   []named
+	functions  []ast.Decl
+	args       []string
+	pkg        *types.Package
 	pos
+}
+
+type interfaceType struct {
+	*types.Interface
+	types.Type
 }
 
 func newBuilder(module string, args ...string) (*builder, error) {
@@ -88,6 +94,7 @@ func (b *builder) init() {
 	b.structs = make(map[string]ast.Decl)
 	b.pos = []int{0, 1}
 	b.imports = map[string]*packageName{"unsafe": {types.NewPackage("unsafe", "unsafe"), ast.NewIdent("unsafe")}}
+	b.implements = make(map[string]interfaceType)
 }
 
 func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, error) {
