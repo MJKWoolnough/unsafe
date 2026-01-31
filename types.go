@@ -211,8 +211,19 @@ func (b *builder) handleNamed(typ types.Type) ast.Expr {
 
 			indicies := make([]ast.Expr, 0, namedType.TypeArgs().Len())
 
-			for param := range namedType.TypeArgs().Types() {
-				indicies = append(indicies, b.fieldToType(param))
+			for typ, param := range combineIters(namedType.Obj().Type().(*types.Named).TypeParams().TypeParams(), namedType.TypeArgs().Types()) {
+				var name *types.TypeName
+
+				switch p := param.(type) {
+				case *types.Named:
+					name = p.Obj()
+				case *types.TypeParam:
+					name = p.Obj()
+				}
+
+				fieldType := b.fieldToType(param)
+				indicies = append(indicies, fieldType)
+				b.implements[newTypeName(name).Name] = interfaceType{typ.Underlying().(*types.Interface), param}
 			}
 
 			return &ast.IndexListExpr{
@@ -227,6 +238,29 @@ func (b *builder) handleNamed(typ types.Type) ast.Expr {
 	}
 
 	return nil
+}
+
+func combineIters[V1, V2 any](iter1 iter.Seq[V1], iter2 iter.Seq[V2]) iter.Seq2[V1, V2] {
+	return func(yield func(V1, V2) bool) {
+		nextIter1, stopIter1 := iter.Pull(iter1)
+		nextIter2, stopIter2 := iter.Pull(iter2)
+
+		defer stopIter1()
+		defer stopIter2()
+
+		for {
+			v1, ok := nextIter1()
+			if !ok {
+				return
+			}
+
+			v2, _ := nextIter2()
+
+			if !yield(v1, v2) {
+				return
+			}
+		}
+	}
 }
 
 func (b *builder) packageName(pkg *types.Package) *ast.Ident {
