@@ -142,7 +142,7 @@ func (b *builder) genAST(packageName string, typeNames []string) (*ast.File, err
 		Doc:     doc,
 		Package: b.newLine(),
 		Name:    ast.NewIdent(packageName),
-		Decls:   append(append([]ast.Decl{b.genImports()}, b.addNewLines(sortedValues(b.structs))...), b.addNewLines(b.functions)...),
+		Decls:   append(append([]ast.Decl{b.genImports()}, b.addNewLines(b.addRequiredMethods(sortedValues(b.structs)))...), b.addNewLines(b.functions)...),
 	}, nil
 }
 
@@ -162,6 +162,65 @@ func encodeOpts(opts []string) string {
 	}
 
 	return string(buf)
+}
+
+func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
+	var ndecls []ast.Decl
+
+	for _, decl := range decls {
+		ndecls = append(ndecls, decl)
+		typ := decl.(*ast.GenDecl).Specs[0].(*ast.TypeSpec)
+		name := typ.Name.Name
+
+		if intf, ok := b.implements[name]; ok {
+			for method := range intf.Methods() {
+				params := make([]*ast.Field, 0, method.Signature().Params().Len())
+				results := make([]*ast.Field, 0, method.Signature().Results().Len())
+
+				for v := range method.Signature().Params().Variables() {
+					params = append(params, &ast.Field{
+						Names: []*ast.Ident{ast.NewIdent("_")},
+						Type:  b.fieldToType(v.Type()),
+					})
+				}
+
+				n := 'A'
+
+				for v := range method.Signature().Results().Variables() {
+					results = append(results, &ast.Field{
+						Names: []*ast.Ident{ast.NewIdent(string(n))},
+						Type:  b.fieldToType(v.Type()),
+					})
+
+					n++
+				}
+
+				ndecls = append(ndecls, &ast.FuncDecl{
+					Recv: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Type: b.handleNamed(intf.Type),
+							},
+						},
+					},
+					Name: ast.NewIdent(method.Name()),
+					Type: &ast.FuncType{
+						Params: &ast.FieldList{
+							List: params,
+						},
+						Results: &ast.FieldList{
+							List: results,
+						},
+					},
+					Body: &ast.BlockStmt{
+						List: []ast.Stmt{&ast.ReturnStmt{}},
+					},
+				})
+			}
+		}
+	}
+
+	return ndecls
 }
 
 func (b *builder) addNewLines(decls []ast.Decl) []ast.Decl {
