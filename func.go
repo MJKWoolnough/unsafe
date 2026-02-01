@@ -105,23 +105,6 @@ func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
 
 		if intf, ok := b.implements[name]; ok {
 			for method := range intf.Methods() {
-				params := make([]*ast.Field, 0, method.Signature().Params().Len())
-				results := make([]*ast.Field, 0, method.Signature().Results().Len())
-
-				for v := range method.Signature().Params().Variables() {
-					params = append(params, &ast.Field{
-						Names: []*ast.Ident{ast.NewIdent("_")},
-						Type:  b.fieldToType(v.Type()),
-					})
-				}
-
-				for v := range method.Signature().Results().Variables() {
-					results = append(results, &ast.Field{
-						Names: []*ast.Ident{ast.NewIdent("_")},
-						Type:  b.fieldToType(v.Type()),
-					})
-				}
-
 				ndecls = append(ndecls, &ast.FuncDecl{
 					Recv: &ast.FieldList{
 						List: []*ast.Field{
@@ -133,10 +116,10 @@ func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
 					Name: ast.NewIdent(method.Name()),
 					Type: &ast.FuncType{
 						Params: &ast.FieldList{
-							List: params,
+							List: setBlankNames(b.structFieldList(method.Signature().Params().Variables, method.Signature().Variadic())),
 						},
 						Results: &ast.FieldList{
-							List: results,
+							List: setBlankNames(b.structFieldList(method.Signature().Results().Variables, false)),
 						},
 					},
 					Body: &ast.BlockStmt{
@@ -148,4 +131,14 @@ func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
 	}
 
 	return ndecls
+}
+
+var blankName = []*ast.Ident{ast.NewIdent("_")}
+
+func setBlankNames(fields []*ast.Field) []*ast.Field {
+	for n := range fields {
+		fields[n].Names = blankName
+	}
+
+	return fields
 }
