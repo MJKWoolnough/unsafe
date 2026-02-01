@@ -184,15 +184,11 @@ func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
 					})
 				}
 
-				n := 'A'
-
 				for v := range method.Signature().Results().Variables() {
 					results = append(results, &ast.Field{
-						Names: []*ast.Ident{ast.NewIdent(string(n))},
+						Names: []*ast.Ident{ast.NewIdent("_")},
 						Type:  b.fieldToType(v.Type()),
 					})
-
-					n++
 				}
 
 				ndecls = append(ndecls, &ast.FuncDecl{

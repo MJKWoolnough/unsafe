@@ -149,7 +149,7 @@ type vimagination_zapto_org_cache_item[T comparable, U any] struct {
 type vimagination_zapto_org_cache_lru[T comparable, U any] struct {
 }
 
-func (vimagination_zapto_org_cache_lru[T, U]) Remove(_ **vimagination_zapto_org_cache_item[T, U], _ **vimagination_zapto_org_cache_item[T, U]) (A *vimagination_zapto_org_cache_item[T, U]) {
+func (vimagination_zapto_org_cache_lru[T, U]) Remove(_ **vimagination_zapto_org_cache_item[T, U], _ **vimagination_zapto_org_cache_item[T, U]) (_ *vimagination_zapto_org_cache_item[T, U]) {
 	return
 }
 
