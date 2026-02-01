@@ -80,7 +80,7 @@ func newTypeName(name *types.TypeName) *ast.Ident {
 	return ast.NewIdent(typeName(name.Pkg().Path() + "." + name.Name()))
 }
 
-func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.Field {
+func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var], variadic bool) []*ast.Field {
 	var fields []*ast.Field
 
 	for field := range fieldsFn() {
@@ -94,6 +94,13 @@ func (b *builder) structFieldList(fieldsFn func() iter.Seq[*types.Var]) []*ast.F
 			Names: name,
 			Type:  b.fieldToType(field.Type()),
 		})
+	}
+
+	if variadic && len(fields) > 0 {
+		fields[len(fields)-1].Type = &ast.UnaryExpr{
+			Op: token.ELLIPSIS,
+			X:  fields[len(fields)-1].Type.(*ast.ArrayType).Elt,
+		}
 	}
 
 	return fields
@@ -138,16 +145,16 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 
 		return &ast.StructType{
 			Fields: &ast.FieldList{
-				List: b.structFieldList(t.Fields),
+				List: b.structFieldList(t.Fields, false),
 			},
 		}
 	case *types.Signature:
 		return &ast.FuncType{
 			Params: &ast.FieldList{
-				List: b.structFieldList(t.Params().Variables),
+				List: b.structFieldList(t.Params().Variables, t.Variadic()),
 			},
 			Results: &ast.FieldList{
-				List: b.structFieldList(t.Results().Variables),
+				List: b.structFieldList(t.Results().Variables, false),
 			},
 		}
 	case *types.Interface:
