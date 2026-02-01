@@ -57,6 +57,8 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 		}
 	}
 
+	nname = &ast.StarExpr{X: nname}
+
 	return &ast.FuncDecl{
 		Name: ast.NewIdent("make_" + tname),
 		Type: &ast.FuncType{
@@ -74,9 +76,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 			Results: &ast.FieldList{
 				List: []*ast.Field{
 					{
-						Type: &ast.StarExpr{
-							X: nname,
-						},
+						Type: nname,
 					},
 				},
 			},
@@ -87,9 +87,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 					Results: []ast.Expr{
 						&ast.CallExpr{
 							Fun: &ast.ParenExpr{
-								X: &ast.StarExpr{
-									X: nname,
-								},
+								X: nname,
 							},
 							Args: conversion,
 						},
