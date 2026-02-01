@@ -5,6 +5,21 @@ import (
 	"go/types"
 )
 
+var (
+	x          = []*ast.Ident{ast.NewIdent("x")}
+	conversion = []ast.Expr{
+		&ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X:   ast.NewIdent("unsafe"),
+				Sel: ast.NewIdent("Pointer"),
+			},
+			Args: []ast.Expr{
+				ast.NewIdent("x"),
+			},
+		},
+	}
+)
+
 func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 	namedType := typ.(*types.Named)
 	obj := namedType.Obj()
@@ -49,7 +64,7 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 			Params: &ast.FieldList{
 				List: []*ast.Field{
 					{
-						Names: []*ast.Ident{ast.NewIdent("x")},
+						Names: x,
 						Type: &ast.StarExpr{
 							X: oname,
 						},
@@ -76,23 +91,17 @@ func (b *builder) buildFunc(typ types.Type) *ast.FuncDecl {
 									X: nname,
 								},
 							},
-							Args: []ast.Expr{
-								&ast.CallExpr{
-									Fun: &ast.SelectorExpr{
-										X:   ast.NewIdent("unsafe"),
-										Sel: ast.NewIdent("Pointer"),
-									},
-									Args: []ast.Expr{
-										ast.NewIdent("x"),
-									},
-								},
-							},
+							Args: conversion,
 						},
 					},
 				},
 			},
 		},
 	}
+}
+
+var emptyReturn = &ast.BlockStmt{
+	List: []ast.Stmt{&ast.ReturnStmt{}},
 }
 
 func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
@@ -122,9 +131,7 @@ func (b *builder) addRequiredMethods(decls []ast.Decl) []ast.Decl {
 							List: setBlankNames(b.structFieldList(method.Signature().Results().Variables, false)),
 						},
 					},
-					Body: &ast.BlockStmt{
-						List: []ast.Stmt{&ast.ReturnStmt{}},
-					},
+					Body: emptyReturn,
 				})
 			}
 		}
