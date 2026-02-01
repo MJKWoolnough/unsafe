@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -28,6 +29,10 @@ func run() error {
 
 	var args []string
 
+	if output == "" {
+		return ErrNoOutput
+	}
+
 	if !excludeComment {
 		args = os.Args[1:]
 	}
@@ -44,3 +49,5 @@ func run() error {
 
 	return b.WriteType(f, packageName, flag.Args()...)
 }
+
+var ErrNoOutput = errors.New("no output file specified")
