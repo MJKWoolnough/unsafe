@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -15,11 +16,10 @@ func main() {
 
 func run() error {
 	var (
-		module, output, packageName string
-		excludeComment              bool
+		output, packageName string
+		excludeComment      bool
 	)
 
-	flag.StringVar(&module, "m", "", "path to module")
 	flag.StringVar(&output, "o", "", "output file")
 	flag.StringVar(&packageName, "p", "", "package name")
 	flag.BoolVar(&excludeComment, "x", false, "don't include go:generate comment")
@@ -32,7 +32,7 @@ func run() error {
 		args = os.Args[1:]
 	}
 
-	b, err := newBuilder(module, args...)
+	b, err := newBuilder(filepath.Dir(output), args...)
 	if err != nil {
 		return err
 	}
