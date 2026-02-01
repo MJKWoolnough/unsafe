@@ -202,6 +202,22 @@ func interfaceContainsUnexported(t *types.Interface) bool {
 		if !method.Exported() {
 			return true
 		}
+
+		for v := range method.Signature().Params().Variables() {
+			if named, ok := v.Type().(*types.Named); ok {
+				if !named.Obj().Exported() {
+					return true
+				}
+			}
+		}
+
+		for v := range method.Signature().Results().Variables() {
+			if named, ok := v.Type().(*types.Named); ok {
+				if !named.Obj().Exported() {
+					return true
+				}
+			}
+		}
 	}
 
 	return false
