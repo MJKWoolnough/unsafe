@@ -41,7 +41,12 @@ func run() error {
 		}
 	}
 
-	b, err := newBuilder(filepath.Dir(output), args...)
+	absPath, err := filepath.Abs(filepath.Dir(output))
+	if err != nil {
+		return err
+	}
+
+	b, err := newBuilder(absPath, args...)
 	if err != nil {
 		return err
 	}
