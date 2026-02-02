@@ -23,7 +23,7 @@ func (b *builder) getStruct(imps map[string]*types.Package, typename string) (ty
 
 	pkg, ok := imps[typename[:pos]]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrNoModule, typename)
+		return nil, fmt.Errorf("%w: %s", ErrNoModule, typename[:pos])
 	}
 
 	obj := pkg.Scope().Lookup(typename[pos+1:])
