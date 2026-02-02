@@ -51,12 +51,31 @@ func run() error {
 		return err
 	}
 
-	f, err := os.Create(output)
-	if err != nil {
+	f := fileWriter{path: output}
+
+	if err := b.WriteType(&f, packageName, flag.Args()...); err != nil {
 		return err
 	}
 
-	return b.WriteType(f, packageName, flag.Args()...)
+	return f.Close()
+}
+
+type fileWriter struct {
+	path string
+	*os.File
+}
+
+func (f *fileWriter) Write(p []byte) (int, error) {
+	if f.File == nil {
+		var err error
+
+		f.File, err = os.Create(f.path)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return f.File.Write(p)
 }
 
 var ErrNoOutput = errors.New("no output file specified")
