@@ -39,6 +39,8 @@ func run() error {
 		if packageName != "" {
 			args = append(args, "-p", packageName)
 		}
+
+		args = append(args, flag.Args()...)
 	}
 
 	absPath, err := filepath.Abs(filepath.Dir(output))
