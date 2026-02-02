@@ -27,14 +27,18 @@ func run() error {
 
 	flag.Parse()
 
-	var args []string
-
 	if output == "" {
 		return ErrNoOutput
 	}
 
+	var args []string
+
 	if !excludeComment {
-		args = os.Args[1:]
+		args = []string{"-o", filepath.Base(output)}
+
+		if packageName != "" {
+			args = append(args, "-p", packageName)
+		}
 	}
 
 	b, err := newBuilder(filepath.Dir(output), args...)
