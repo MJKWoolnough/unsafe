@@ -139,8 +139,8 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Struct:
-		if isTypeRecursive(typ, map[types.Type]bool{}) {
-			return b.requiredTypeName(typ.(*types.Named))
+		if namedType, isNamed := typ.(*types.Named); isNamed && isTypeRecursive(typ, map[types.Type]bool{}) {
+			return b.requiredTypeName(namedType)
 		}
 
 		return &ast.StructType{
