@@ -9,6 +9,8 @@ import (
 	"iter"
 	"strconv"
 	"strings"
+
+	"vimagination.zapto.org/gotypes"
 )
 
 func (b *builder) getStruct(imps map[string]*types.Package, typename string) (types.Type, error) {
@@ -139,7 +141,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			Elt: b.fieldToType(t.Elem()),
 		}
 	case *types.Struct:
-		if namedType, isNamed := typ.(*types.Named); isNamed && isTypeRecursive(typ, map[types.Type]bool{}) {
+		if namedType, isNamed := typ.(*types.Named); isNamed && gotypes.IsTypeRecursive(typ) {
 			return b.requiredTypeName(namedType)
 		}
 
@@ -162,7 +164,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 			return ast.NewIdent("any")
 		}
 
-		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || isTypeRecursive(typ, map[types.Type]bool{}) || interfaceContainsUnexported(t)) {
+		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || gotypes.IsTypeRecursive(typ) || interfaceContainsUnexported(t)) {
 			return b.requiredTypeName(typ.(*types.Named))
 		}
 
@@ -304,62 +306,6 @@ func (b *builder) packageName(pkg *types.Package) *ast.Ident {
 	}
 
 	return name.Ident
-}
-
-func isTypeRecursive(typ types.Type, found map[types.Type]bool) bool {
-	f, ok := found[typ]
-	if ok {
-		return f
-	}
-
-	found[typ] = len(found) == 0
-
-	switch t := typ.Underlying().(type) {
-	case *types.Struct:
-		for field := range t.Fields() {
-			if isTypeRecursive(field.Type(), found) {
-				return true
-			}
-		}
-	case *types.Pointer:
-		return isTypeRecursive(t.Elem(), found)
-	case *types.Map:
-		if isTypeRecursive(t.Key(), found) {
-			return true
-		}
-
-		return isTypeRecursive(t.Elem(), found)
-	case *types.Array:
-		return isTypeRecursive(t.Elem(), found)
-	case *types.Slice:
-		return isTypeRecursive(t.Elem(), found)
-	case *types.Signature:
-		for typ := range t.Params().Variables() {
-			if isTypeRecursive(typ.Type(), found) {
-				return true
-			}
-		}
-
-		for typ := range t.Results().Variables() {
-			if isTypeRecursive(typ.Type(), found) {
-				return true
-			}
-		}
-	case *types.Interface:
-		for typ := range t.EmbeddedTypes() {
-			if isTypeRecursive(typ, found) {
-				return true
-			}
-		}
-
-		for fn := range t.ExplicitMethods() {
-			if isTypeRecursive(fn.Signature(), found) {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 var (
