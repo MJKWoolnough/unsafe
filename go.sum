@@ -4,5 +4,7 @@ vimagination.zapto.org/cache v1.0.2 h1:PwIcBFVW26MvZc6m5RvPhy0jSsbtjkqg5qZY+JLTx
 vimagination.zapto.org/cache v1.0.2/go.mod h1:YDVluo/gxsyPJJOMEwK3B/VVcInoKR0lZIqhwOPNnYo=
 vimagination.zapto.org/gotypes v1.2.1 h1:EqgMV3Y+cQdZhQAsc/VI4FJ4ZACiV/mdVlxFpuYNbbA=
 vimagination.zapto.org/gotypes v1.2.1/go.mod h1:l1SWFK4UrKZZjgDGTUnnl3Z1cfcjymCPN3VOIkges9Q=
+vimagination.zapto.org/gotypes v1.3.0 h1:9lFd1GOMuYDv3JeYFQg9IxNzJSvJWDnHfdnD2Uoxcc4=
+vimagination.zapto.org/gotypes v1.3.0/go.mod h1:l1SWFK4UrKZZjgDGTUnnl3Z1cfcjymCPN3VOIkges9Q=
 vimagination.zapto.org/httpreaderat v1.0.1 h1:488QrzC4wKbDtpi/A69lGTA+pOASbvcVkHOxDfObUSw=
 vimagination.zapto.org/httpreaderat v1.0.1/go.mod h1:OKJ0p+kAiWeYKDsDd++dqNxfYeAhExQZiOyaRMqxdqs=
