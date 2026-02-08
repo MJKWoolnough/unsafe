@@ -165,7 +165,7 @@ func (b *builder) fieldToType(typ types.Type) ast.Expr {
 		}
 
 		if namedType, isNamed := typ.(*types.Named); isNamed && (namedType.TypeArgs() != nil || gotypes.IsTypeRecursive(typ) || interfaceContainsUnexported(t)) {
-			return b.requiredTypeName(typ.(*types.Named))
+			return b.requiredTypeName(namedType)
 		}
 
 		var fields []*ast.Field
