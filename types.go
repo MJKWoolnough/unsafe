@@ -298,8 +298,6 @@ func (b *builder) packageName(pkg *types.Package) *ast.Ident {
 }
 
 var (
-	ErrNoModuleType = errors.New("module-less type")
-	ErrNoModule     = errors.New("module not imported")
-	ErrNotStruct    = errors.New("not a struct type")
-	ErrInternal     = errors.New("cannot process internal type")
+	ErrNotStruct = errors.New("not a struct type")
+	ErrInternal  = errors.New("cannot process internal type")
 )
