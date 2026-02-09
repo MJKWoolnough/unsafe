@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -14,31 +13,21 @@ import (
 )
 
 func (b *builder) getStruct(imps map[string]*types.Package, typename string) (types.Type, error) {
-	pos := strings.LastIndexByte(typename, '.')
-	if pos < 0 {
-		return nil, fmt.Errorf("%w: %s", ErrNoModuleType, typename)
+	obj, err := gotypes.Lookup(imps, typename)
+	if err != nil {
+		return nil, err
 	}
 
-	if isInternal(typename[:pos]) {
+	if isInternal(obj.Pkg().Path()) {
 		return nil, ErrInternal
 	}
 
-	pkg, ok := imps[typename[:pos]]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrNoModule, typename[:pos])
-	}
-
-	obj := pkg.Scope().Lookup(typename[pos+1:])
-	if obj == nil {
-		return nil, fmt.Errorf("%w: %s", ErrNoType, typename)
-	}
-
-	_, ok = obj.Type().Underlying().(*types.Struct)
+	_, ok := obj.Type().Underlying().(*types.Struct)
 	if !ok {
 		return nil, ErrNotStruct
 	}
 
-	b.imports[typename[:pos]] = &packageName{pkg, ast.NewIdent("")}
+	b.imports[obj.Pkg().Path()] = &packageName{obj.Pkg(), ast.NewIdent("")}
 
 	return obj.Type(), nil
 }
@@ -311,7 +300,6 @@ func (b *builder) packageName(pkg *types.Package) *ast.Ident {
 var (
 	ErrNoModuleType = errors.New("module-less type")
 	ErrNoModule     = errors.New("module not imported")
-	ErrNoType       = errors.New("no type found")
 	ErrNotStruct    = errors.New("not a struct type")
 	ErrInternal     = errors.New("cannot process internal type")
 )
