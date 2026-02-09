@@ -16,7 +16,7 @@ const (
 )
 
 func isInternal(path string) bool {
-	return strings.Contains(path, "/internal/") || strings.HasSuffix(path, "/internal") || strings.HasPrefix(path, "internal/")
+	return strings.Contains(path, "/internal/") || strings.HasSuffix(path, "/internal") || strings.HasPrefix(path, "internal/") || path == "internal"
 }
 
 func (b *builder) genImports() *ast.GenDecl {
