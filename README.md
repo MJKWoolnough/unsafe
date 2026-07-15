@@ -1,7 +1,6 @@
 # unsafe
 
 [![CI](https://github.com/MJKWoolnough/unsafe/actions/workflows/go-checks.yml/badge.svg)](https://github.com/MJKWoolnough/unsafe/actions)
-[![Go Report Card](https://goreportcard.com/badge/vimagination.zapto.org/unsafe)](https://goreportcard.com/report/vimagination.zapto.org/unsafe)
 
 --
 
